@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink-50 text-ink-900 font-sans text-base antialiased;
+  /* Прототип рассчитан на 1280px и шире, мобильной адаптации нет. */
+  min-width: 1280px;
+}
+
+/* Табличные цифры: моноширинные, одинаковой ширины, по правому краю. */
+.num {
+  @apply font-mono tabular-nums text-right whitespace-nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Вспышка строки, которая сменила знак ROI при переключении горизонта. */
+@keyframes flip-flash {
+  0% { background-color: rgba(47, 95, 216, 0.16); }
+  60% { background-color: rgba(47, 95, 216, 0.07); }
+  100% { background-color: transparent; }
+}
+.flip-flash {
+  animation: flip-flash 1100ms ease-out;
+}
+
+@keyframes value-rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.value-rise {
+  animation: value-rise 320ms ease-out;
+}
+
+.thead-cell {
+  @apply px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-500 select-none;
+}
+
+.tcell {
+  @apply px-2 py-[5px] border-b border-ink-100;
+}
+
+/* Тонкая полоса-индикатор доли внутри ячейки. */
+.microbar {
+  @apply h-[3px] rounded-sm bg-ink-200;
+}

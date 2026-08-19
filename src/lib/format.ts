@@ -1,0 +1,27 @@
+/** Единый формат чисел на весь прототип: узкий пробел в разрядах, минус — U+2212. */
+const nf = (min = 0, max = 0) =>
+  new Intl.NumberFormat('ru-RU', { minimumFractionDigits: min, maximumFractionDigits: max })
+
+const fix = (s: string) => s.replace(/-/g, '−').replace(/ /g, ' ')
+
+export const money = (v: number): string => fix(nf().format(Math.round(v)))
+
+export const moneyShort = (v: number): string => {
+  const a = Math.abs(v)
+  if (a >= 1e9) return fix(nf(1, 1).format(v / 1e9)) + ' млрд'
+  if (a >= 1e6) return fix(nf(1, 1).format(v / 1e6)) + ' млн'
+  if (a >= 1e4) return fix(nf().format(Math.round(v / 1e3))) + ' тыс'
+  return fix(nf().format(Math.round(v)))
+}
+
+export const int = (v: number): string => fix(nf().format(Math.round(v)))
+
+export const pct = (v: number, digits = 1): string => fix(nf(digits, digits).format(v * 100)) + '%'
+
+/** Проценты со знаком — для ROI и разниц. */
+export const pctSigned = (v: number, digits = 1): string => (v > 0 ? '+' : '') + pct(v, digits)
+
+export const pp = (v: number, digits = 1): string =>
+  (v > 0 ? '+' : '') + fix(nf(digits, digits).format(v * 100)) + ' п.п.'
+
+export const rub = (v: number): string => money(v) + ' ₽'
