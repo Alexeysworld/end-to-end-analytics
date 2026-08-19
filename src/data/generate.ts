@@ -1,5 +1,12 @@
 import { BRAND_BY_ID, CATEGORY_BRAND_MIX } from './brands'
-import { CAMPAIGN_SPECS, CATEGORY_BY_ID, SOURCES, type CampaignSpec, type ItemSpec } from './specs'
+import {
+  CAMPAIGN_SPECS,
+  CATEGORY_BY_ID,
+  PLACEMENTS,
+  SOURCES,
+  type CampaignSpec,
+  type ItemSpec,
+} from './specs'
 import type {
   BrandSlice,
   Dataset,
@@ -327,8 +334,31 @@ export function generateDataset(seed: number = SEED): Dataset {
     raw: emptyRaw(),
   }))
 
+  // Узлы типов размещения создаём по мере надобности: у источника без деления
+  // (VK, Telegram, блогеры) их просто нет, и кампании висят прямо на источнике.
+  const placementNodes = new Map<string, TreeNode>()
+  const placementFor = (source: TreeNode, placementId: string): TreeNode => {
+    const existing = placementNodes.get(placementId)
+    if (existing) return existing
+    const spec = PLACEMENTS.find((p) => p.id === placementId)!
+    const node: TreeNode = {
+      id: `plc:${placementId}`,
+      level: 'placement',
+      name: spec.name,
+      parentId: source.id,
+      campaignId: null,
+      children: [],
+      raw: emptyRaw(),
+    }
+    placementNodes.set(placementId, node)
+    source.children.push(node)
+    return node
+  }
+
   for (const spec of CAMPAIGN_SPECS) {
     const source = sources.find((s) => s.id === `src:${spec.sourceId}`)!
+    const placement = spec.placementId ? placementFor(source, spec.placementId) : null
+    const parent = placement ?? source
     const cat = CATEGORY_BY_ID[spec.categoryId]
     const baseCr = deriveCr(spec)
     const groupWeights = weights(spec.groups.length, rand, 0.4)
@@ -337,13 +367,15 @@ export function generateDataset(seed: number = SEED): Dataset {
       id: `cmp:${spec.id}`,
       level: 'campaign',
       name: spec.name,
-      parentId: source.id,
+      parentId: parent.id,
       campaignId: `cmp:${spec.id}`,
       children: [],
       raw: emptyRaw(),
       meta: {
         sourceId: source.id,
         sourceName: source.name,
+        placementName: placement?.name,
+        fullName: placement ? `${placement.name} — ${spec.name}` : spec.name,
         category: cat.name,
         categoryId: cat.id,
         // Заполняется после сборки запросов: зависит от переопределений.
@@ -477,9 +509,11 @@ export function generateDataset(seed: number = SEED): Dataset {
 
     campaign.weeks = buildWeeks(spec, campaign.raw, rand)
     campaigns.push(campaign)
-    source.children.push(campaign)
+    parent.children.push(campaign)
   }
 
+  // Суммы снизу вверх: размещения, затем источники.
+  for (const node of placementNodes.values()) node.raw = sumRaw(node.children)
   for (const source of sources) source.raw = sumRaw(source.children)
 
   return {

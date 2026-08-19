@@ -34,7 +34,8 @@ function row(node: TreeNode) {
 }
 
 const src = dataset.sources[0]
-const cmp = src.children.find((c) => c.id === 'cmp:ya-jackets')!
+const cmp = dataset.campaigns.find((c) => c.id === 'cmp:ya-jackets')!
+const plc = src.children.find((c) => c.id === 'plc:ya-search')!
 const grp = cmp.children[1]
 const kw = grp.children[0]
 const kwBad = cmp.children[0].children[0]
@@ -42,7 +43,13 @@ const kwBad = cmp.children[0].children[0]
 console.log('='.repeat(92))
 console.log('ПРИМЕР СТРОКИ НА КАЖДОМ УРОВНЕ ИЕРАРХИИ  (сид ' + dataset.seed + ', период: ' + dataset.periodLabel + ')')
 console.log('='.repeat(92))
-;[src, cmp, grp, kw, kwBad].forEach(row)
+console.log('\nДЕРЕВО:')
+const printTree = (n: TreeNode, d = 0) => {
+  console.log('  ' + '  '.repeat(d) + `${'·'.repeat(1)} [${n.level}] ${n.name}`)
+  if (n.level !== 'adgroup') n.children.forEach((c) => printTree(c, d + 1))
+}
+dataset.sources.forEach((s) => printTree(s))
+;[src, plc, cmp, grp, kw, kwBad].forEach(row)
 
 console.log('\n' + '='.repeat(92))
 console.log('КРИВАЯ ОКУПАЕМОСТИ КАМПАНИИ «' + cmp.name + '»')

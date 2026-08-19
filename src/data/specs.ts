@@ -99,6 +99,8 @@ export interface CampaignSpec {
   id: string
   name: string
   sourceId: string
+  /** Тип размещения внутри источника. Только там, где деление осмысленно. */
+  placementId?: string
   categoryId: string
   trafficKind: 'brand' | 'warm' | 'cold' | 'retargeting' | 'influencer'
   archetype: Archetype
@@ -122,11 +124,22 @@ export const SOURCES: { id: string; name: string }[] = [
   { id: 'infl', name: 'Реклама у блогеров' },
 ]
 
+/**
+ * Типы размещения внутри источника. Товарная кампания по фиду отнесена к РСЯ:
+ * исторически это смарт-баннеры, и в отчёте её удобнее сравнивать
+ * с остальным сетевым трафиком, а не с поиском.
+ */
+export const PLACEMENTS: { id: string; sourceId: string; name: string }[] = [
+  { id: 'ya-search', sourceId: 'yandex', name: 'Поиск' },
+  { id: 'ya-network', sourceId: 'yandex', name: 'РСЯ' },
+]
+
 export const CAMPAIGN_SPECS: CampaignSpec[] = [
   {
     id: 'ya-brand',
-    name: 'Поиск — Бренд',
+    name: 'Бренд',
     sourceId: 'yandex',
+    placementId: 'ya-search',
     categoryId: 'mix',
     trafficKind: 'brand',
     archetype: 'profitable',
@@ -163,8 +176,9 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
   },
   {
     id: 'ya-jackets',
-    name: 'Поиск — Куртки',
+    name: 'Куртки',
     sourceId: 'yandex',
+    placementId: 'ya-search',
     categoryId: 'jackets',
     trafficKind: 'warm',
     archetype: 'mixed-inside',
@@ -258,8 +272,9 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
   },
   {
     id: 'ya-pants',
-    name: 'Поиск — Штаны и брюки',
+    name: 'Штаны и брюки',
     sourceId: 'yandex',
+    placementId: 'ya-search',
     categoryId: 'pants',
     trafficKind: 'warm',
     archetype: 'returns-heavy',
@@ -297,8 +312,9 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
   },
   {
     id: 'ya-accessories',
-    name: 'Поиск — Носки и ремни',
+    name: 'Носки и ремни',
     sourceId: 'yandex',
+    placementId: 'ya-search',
     categoryId: 'accessories',
     trafficKind: 'warm',
     archetype: 'profitable',
@@ -331,8 +347,9 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
   },
   {
     id: 'ya-retargeting',
-    name: 'РСЯ — Ретаргетинг брошенных корзин',
+    name: 'Ретаргетинг брошенных корзин',
     sourceId: 'yandex',
+    placementId: 'ya-network',
     categoryId: 'mix',
     trafficKind: 'retargeting',
     archetype: 'profitable',
@@ -363,8 +380,9 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
   },
   {
     id: 'ya-broad',
-    name: 'РСЯ — Широкий охват',
+    name: 'Широкий охват',
     sourceId: 'yandex',
+    placementId: 'ya-network',
     categoryId: 'jackets',
     trafficKind: 'cold',
     archetype: 'unprofitable',
@@ -403,6 +421,7 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
     id: 'ya-feed',
     name: 'Товарная кампания по фиду',
     sourceId: 'yandex',
+    placementId: 'ya-network',
     categoryId: 'mix',
     trafficKind: 'warm',
     archetype: 'profitable',
@@ -439,8 +458,9 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
   },
   {
     id: 'ya-workwear',
-    name: 'Поиск — Спецодежда оптом',
+    name: 'Спецодежда оптом',
     sourceId: 'yandex',
+    placementId: 'ya-search',
     categoryId: 'workwear',
     trafficKind: 'cold',
     archetype: 'unprofitable',

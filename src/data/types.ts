@@ -22,8 +22,14 @@ export const PURCHASE_CHANNEL_LABEL: Record<PurchaseChannel, string> = {
 /** Горизонт окупаемости: первый заказ или все покупки клиента за период жизни. */
 export type Horizon = 'first' | 'all'
 
-/** Уровень в иерархии: канал трафика → кампания → группа → запрос. */
-export type NodeLevel = 'source' | 'campaign' | 'adgroup' | 'keyword'
+/**
+ * Уровень в иерархии: канал трафика → тип размещения → кампания → группа → запрос.
+ *
+ * Уровень размещения есть не у всех источников: в Яндекс Директе это Поиск
+ * и РСЯ, а у VK, Telegram и блогеров делить нечего, там кампании висят прямо
+ * на источнике. Глубина ветки поэтому разная — таблица это допускает.
+ */
+export type NodeLevel = 'source' | 'placement' | 'campaign' | 'adgroup' | 'keyword'
 
 /**
  * Заказы одной «когорты клиентов», приведённых узлом.
@@ -113,6 +119,10 @@ export interface TreeNode {
 export interface CampaignMeta {
   sourceId: string
   sourceName: string
+  /** Тип размещения, если у источника есть такое деление. */
+  placementName?: string
+  /** Полное имя со всеми уровнями выше — для плоских списков на других экранах. */
+  fullName: string
   /** Товарная категория задаёт средний чек, маржинальность и долю выкупа. */
   category: string
   categoryId: string

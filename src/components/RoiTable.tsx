@@ -196,7 +196,8 @@ export function RoiTable({
           screen={SCREEN}
           subtitle={
             <>
-              Разворачивайте строку, чтобы уйти вглубь: источник → кампания → группа → запрос.
+              Разворачивайте строку, чтобы уйти вглубь: источник → тип размещения → кампания → группа →
+              запрос. Уровень размещения есть там, где он осмыслен: в Директе это Поиск и РСЯ.
               Клик по названию кампании открывает карточку. Заказы объединяют сайт и мобильное
               приложение; раскладку можно развернуть переключателем справа.
             </>
@@ -235,7 +236,7 @@ export function RoiTable({
             <tr className="border-b border-ink-200">
               <th className="thead-cell w-[34%] text-left">
                 <span className="inline-flex items-center gap-1">
-                  Источник · кампания · группа · запрос
+                  Источник · размещение · кампания · группа · запрос
                   <NoteButton
                     blockId="roi-table-hierarchy"
                     blockLabel="Иерархия и drill-down в таблице"
@@ -402,7 +403,9 @@ function TableRow({
       key={`${node.id}-${horizon}`}
       className={`group transition-colors hover:bg-ink-50 ${
         savedByRepeat ? 'flip-flash' : ''
-      } ${node.level === 'source' ? 'bg-ink-50/60 font-medium' : ''}`}
+      } ${node.level === 'source' ? 'bg-ink-50/60 font-medium' : ''} ${
+        node.level === 'placement' ? 'bg-ink-50/30' : ''
+      }`}
     >
       {/* Убыточные строки помечаем узкой красной полосой у левого края:
           цветом кодируем только знак результата, фон не заливаем. */}
@@ -430,8 +433,12 @@ function TableRow({
             </button>
           ) : (
             <span
-              className={`truncate ${
-                node.level === 'source' ? 'text-sm font-semibold' : 'text-sm'
+              className={`truncate text-sm ${
+                node.level === 'source'
+                  ? 'font-semibold'
+                  : node.level === 'placement'
+                    ? 'font-medium'
+                    : ''
               } ${node.level === 'keyword' ? 'text-ink-600' : 'text-ink-900'}`}
               title={node.note ?? node.name}
             >
