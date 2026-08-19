@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CampaignCard } from './components/CampaignCard'
 import { CHANNEL_MODE_LABEL, RoiTable, plural, type ChannelMode } from './components/RoiTable'
 import { dataset } from './data/generate'
 import { derive } from './data/metrics'
@@ -129,9 +130,11 @@ function Shell() {
 
       {notesOpen && <NotesPanel onClose={() => setNotesOpen(false)} />}
       {openCampaign && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/20 p-8" onClick={() => setOpenCampaign(null)}>
-          <div className="rounded-md bg-white p-6 text-sm text-ink-500">Карточка кампании — в работе.</div>
-        </div>
+        <CampaignCard
+          campaign={dataset.campaigns.find((c) => c.id === openCampaign)!}
+          horizon={horizon}
+          onClose={() => setOpenCampaign(null)}
+        />
       )}
     </div>
   )
