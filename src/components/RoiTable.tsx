@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { dataset } from '../data/generate'
 import { derive } from '../data/metrics'
 import type { DerivedMetrics, Horizon, TreeNode } from '../data/types'
-import { int, moneyShort, pct, rub } from '../lib/format'
+import { count, int, moneyShort, pct, rub } from '../lib/format'
 import { NoteButton } from '../state/notes'
 import { Badge, BlockHeader, Num, Panel, Roi, Segmented } from './ui'
 
@@ -469,16 +469,16 @@ function TableRow({
       <td className="tcell text-right"><Num>{moneyShort(m.spend)}</Num></td>
       <td className="tcell text-right"><Num muted>{int(m.clicks)}</Num></td>
       <td className="tcell text-right"><Num muted>{Math.round(m.cpc)}</Num></td>
-      <td className="tcell text-right"><Num>{int(m.orders)}</Num></td>
+      <td className="tcell text-right"><Num>{count(m.orders)}</Num></td>
 
       {channelMode === 'online-offline' && (
         <>
           <td className="tcell bg-accent-soft/30 text-right">
-            <Num>{int(m.onlineOrders)}</Num>
+            <Num>{count(m.onlineOrders)}</Num>
             <div className="text-2xs text-ink-400">{pct(m.onlineShare, 0)}</div>
           </td>
           <td className="tcell bg-accent-soft/30 text-right">
-            <Num>{int(m.ordersByChannel.offline)}</Num>
+            <Num>{count(m.ordersByChannel.offline)}</Num>
             <div className="text-2xs text-ink-400">{pct(m.channelShare.offline, 0)}</div>
           </td>
         </>
@@ -486,22 +486,22 @@ function TableRow({
       {channelMode === 'full' && (
         <>
           <td className="tcell bg-accent-soft/30 text-right">
-            <Num>{int(m.ordersByChannel.web)}</Num>
+            <Num>{count(m.ordersByChannel.web)}</Num>
             <div className="text-2xs text-ink-400">{pct(m.channelShare.web, 0)}</div>
           </td>
           <td className="tcell bg-accent-soft/30 text-right">
-            <Num>{int(m.ordersByChannel.app)}</Num>
+            <Num>{count(m.ordersByChannel.app)}</Num>
             <div className="text-2xs text-ink-400">{pct(m.channelShare.app, 0)}</div>
           </td>
           <td className="tcell bg-accent-soft/30 text-right">
-            <Num>{int(m.ordersByChannel.offline)}</Num>
+            <Num>{count(m.ordersByChannel.offline)}</Num>
             <div className="text-2xs text-ink-400">{pct(m.channelShare.offline, 0)}</div>
           </td>
         </>
       )}
 
       <td className="tcell text-right">
-        <Num>{int(m.netOrders)}</Num>
+        <Num>{count(m.netOrders)}</Num>
         <div
           className={`text-2xs ${m.buyoutRate < 0.75 ? 'text-neg' : 'text-ink-400'}`}
           title="Доля выкупа от заказанного"
