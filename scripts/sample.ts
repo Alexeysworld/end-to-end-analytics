@@ -1,3 +1,4 @@
+import { BRAND_BY_ID } from '../src/data/brands'
 import { dataset } from '../src/data/generate'
 import { cumulativeRoi, derive, repeatRateGapToBreakEven, webOnlyRoi } from '../src/data/metrics'
 import type { TreeNode } from '../src/data/types'
@@ -123,3 +124,65 @@ console.log(`  не атрибуцировано: ${money(tf.unattributedOrders)
 console.log(`  бюджет в кампаниях, которые убыточны на 1-м заказе и прибыльны на всех: ${money(flipSpend)} ₽ (${((flipSpend / tf.spend) * 100).toFixed(1)}% расхода)`)
 console.log(`  выкуп по аккаунту: ${(tf.buyoutRate * 100).toFixed(1)}% от заказанной выручки`)
 console.log(`  запросов в дереве: ${dataset.campaigns.reduce((a, c) => a + c.children.reduce((b, g) => b + g.children.length, 0), 0)} · групп: ${dataset.campaigns.reduce((a, c) => a + c.children.length, 0)} · кампаний: ${dataset.campaigns.length}`)
+
+// ── Сходимость: сумма по брендам должна точно совпадать с итогами узла ────────
+import { brandTotals } from '../src/data/metrics'
+{
+  const ta2 = derive(dataset.totals, 'all')
+  // Корень для обхода: искусственный узел со всеми каналами.
+  const root: TreeNode = {
+    id: 'root',
+    level: 'source',
+    name: 'Все источники',
+    parentId: null,
+    campaignId: null,
+    children: dataset.sources,
+    raw: dataset.totals,
+  }
+  const brands = brandTotals(root, 'all')
+  const bNet = brands.reduce((a, b) => a + b.netRevenue, 0)
+  const bMargin = brands.reduce((a, b) => a + b.margin, 0)
+  const bOrders = brands.reduce((a, b) => a + b.orders, 0)
+  console.log('\n' + '='.repeat(92))
+  console.log('ТОВАРНАЯ АНАЛИТИКА ПО БРЕНДАМ (все покупки)')
+  console.log('='.repeat(92))
+  console.log(
+    'бренд'.padEnd(20) +
+      'тип'.padEnd(12) +
+      'заказы'.padStart(9) +
+      'выкупл.'.padStart(9) +
+      'доход выкуп.'.padStart(14) +
+      'ср.чек'.padStart(9) +
+      'марж.'.padStart(7) +
+      'возвр.'.padStart(8) +
+      'повтор'.padStart(8) +
+      'расход(р)'.padStart(11) +
+      'ROI'.padStart(9),
+  )
+  for (const b of brands) {
+    const meta = BRAND_BY_ID[b.brandId]
+    console.log(
+      meta.name.padEnd(20) +
+        meta.kind.padEnd(12) +
+        money(b.orders).padStart(9) +
+        money(b.netOrders).padStart(9) +
+        money(b.netRevenue).padStart(14) +
+        money(b.aov).padStart(9) +
+        `${(b.marginRate * 100).toFixed(0)}%`.padStart(7) +
+        `${(b.returnRate * 100).toFixed(0)}%`.padStart(8) +
+        `${(b.repeatOrdersShare * 100).toFixed(0)}%`.padStart(8) +
+        money(b.allocatedSpend).padStart(11) +
+        pct(b.roi).padStart(9),
+    )
+  }
+  console.log(
+    `\n  СХОДИМОСТЬ с таблицей окупаемости: заказы ${money(bOrders)} vs ${money(ta2.orders)} · ` +
+      `доход ${money(bNet)} vs ${money(ta2.netRevenue)} · маржа ${money(bMargin)} vs ${money(ta2.margin)}`,
+  )
+  const err = Math.max(
+    Math.abs(bOrders - ta2.orders),
+    Math.abs(bNet - ta2.netRevenue) / 1000,
+    Math.abs(bMargin - ta2.margin) / 1000,
+  )
+  console.log(`  максимальное расхождение: ${err < 0.5 ? 'нет (в пределах округления)' : err.toFixed(2)}`)
+}

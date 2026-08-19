@@ -1,5 +1,7 @@
+import { BRAND_BY_ID, CATEGORY_BRAND_MIX } from './brands'
 import { CAMPAIGN_SPECS, CATEGORY_BY_ID, SOURCES, type CampaignSpec, type ItemSpec } from './specs'
 import type {
+  BrandSlice,
   Dataset,
   OrderCohort,
   PurchaseChannel,
@@ -68,6 +70,64 @@ function splitByChannels(
   return { web: value * shares.web, app: value * shares.app, offline: value * shares.offline }
 }
 
+/**
+ * Разложение когорты по брендам.
+ *
+ * Доли задают, кому достались заказы; множители бренда — насколько он
+ * отличается от среднего по запросу. Дальше суммы нормируются так, чтобы
+ * итог по брендам в точности совпал с числами когорты: вкладка «Товарная
+ * аналитика» и таблица окупаемости не имеют права расходиться.
+ */
+function splitByBrands(
+  cohort: {
+    orders: number
+    netOrders: number
+    revenue: number
+    netRevenue: number
+    margin: number
+  },
+  mix: Record<string, number>,
+): Record<string, BrandSlice> {
+  const ids = Object.keys(mix)
+  const shareSum = ids.reduce((a, id) => a + mix[id], 0) || 1
+
+  // Сырые значения по множителям бренда.
+  const raw = ids.map((id) => {
+    const b = BRAND_BY_ID[id]
+    const orders = cohort.orders * (mix[id] / shareSum)
+    return {
+      id,
+      orders,
+      revenueW: orders * b.aov,
+      buyoutW: b.buyout,
+      marginW: b.aov * b.margin,
+    }
+  })
+
+  const revenueNorm = raw.reduce((a, r) => a + r.revenueW, 0) || 1
+  // Выкуп: взвешиваем заказы на множитель выкупа и нормируем к общему выкупу.
+  const buyoutNorm = raw.reduce((a, r) => a + r.orders * r.buyoutW, 0) || 1
+  const marginNorm = raw.reduce((a, r) => a + r.orders * r.marginW, 0) || 1
+
+  const out: Record<string, BrandSlice> = {}
+  for (const r of raw) {
+    const revenue = cohort.revenue * (r.revenueW / revenueNorm)
+    const netOrders = cohort.netOrders * ((r.orders * r.buyoutW) / buyoutNorm)
+    // Доход от выкупленных заказов бренда: доля выкупленных заказов × его чек.
+    const netRevenue =
+      cohort.netRevenue * ((r.orders * r.buyoutW * BRAND_BY_ID[r.id].aov) /
+        (raw.reduce((a, x) => a + x.orders * x.buyoutW * BRAND_BY_ID[x.id].aov, 0) || 1))
+    out[r.id] = {
+      orders: r.orders,
+      netOrders,
+      revenue,
+      netRevenue,
+      margin: cohort.margin * ((r.orders * r.marginW) / marginNorm),
+    }
+  }
+  return out
+}
+
 /** Три когорты заказов: первый, второй, третий и последующие. */
 function buildCohorts(args: {
   orders1: number
@@ -76,8 +136,9 @@ function buildCohorts(args: {
   buyoutRate: number
   repeatRate: number
   channelShares: Record<PurchaseChannel, number>
+  brandMix: Record<string, number>
 }): OrderCohort[] {
-  const { orders1, aov, marginRate, buyoutRate, repeatRate, channelShares } = args
+  const { orders1, aov, marginRate, buyoutRate, repeatRate, channelShares, brandMix } = args
   // Третий и последующие заказы приходят реже второго: затухание 0.8.
   const counts: Record<1 | 2 | 3, number> = {
     1: orders1,
@@ -94,16 +155,21 @@ function buildCohorts(args: {
     const buyout = Math.min(0.97, buyoutRate + buyoutBonus[orderIndex])
     const revenue = orders * cohortAov
     const netRevenue = revenue * buyout
+    const netOrders = orders * buyout
+    const margin = netRevenue * marginRate
     const shares =
       orderIndex === 1 ? channelShares : shiftChannelsForRepeat(channelShares, orderIndex)
     return {
       orderIndex,
       orders,
+      netOrders,
       revenue,
       netRevenue,
-      margin: netRevenue * marginRate,
+      margin,
       netRevenueByChannel: splitByChannels(netRevenue, shares),
       ordersByChannel: splitByChannels(orders, shares),
+      netOrdersByChannel: splitByChannels(netOrders, shares),
+      brands: splitByBrands({ orders, netOrders, revenue, netRevenue, margin }, brandMix),
     }
   })
 }
@@ -117,15 +183,25 @@ function buildCohorts(args: {
 function scaleOrders(raw: RawMetrics, k: number): void {
   for (const c of raw.cohorts) {
     c.orders *= k
+    c.netOrders *= k
     c.revenue *= k
     c.netRevenue *= k
     c.margin *= k
     for (const ch of ['web', 'app', 'offline'] as const) {
       c.netRevenueByChannel[ch] *= k
       c.ordersByChannel[ch] *= k
+      c.netOrdersByChannel[ch] *= k
+    }
+    for (const slice of Object.values(c.brands)) {
+      slice.orders *= k
+      slice.netOrders *= k
+      slice.revenue *= k
+      slice.netRevenue *= k
+      slice.margin *= k
     }
   }
   raw.unattributed.orders *= k
+  raw.unattributed.netOrders *= k
   raw.unattributed.netRevenue *= k
   raw.unattributed.margin *= k
   for (const ch of ['web', 'app', 'offline'] as const) {
@@ -140,13 +216,22 @@ function emptyRaw(): RawMetrics {
     cohorts: ([1, 2, 3] as const).map((orderIndex) => ({
       orderIndex,
       orders: 0,
+      netOrders: 0,
       revenue: 0,
       netRevenue: 0,
       margin: 0,
       netRevenueByChannel: zeroChannels(),
       ordersByChannel: zeroChannels(),
+      netOrdersByChannel: zeroChannels(),
+      brands: {},
     })),
-    unattributed: { orders: 0, netRevenue: 0, margin: 0, ordersByChannel: zeroChannels() },
+    unattributed: {
+      orders: 0,
+      netOrders: 0,
+      netRevenue: 0,
+      margin: 0,
+      ordersByChannel: zeroChannels(),
+    },
   }
 }
 
@@ -156,15 +241,32 @@ function addRaw(target: RawMetrics, src: RawMetrics): RawMetrics {
   src.cohorts.forEach((c, i) => {
     const t = target.cohorts[i]
     t.orders += c.orders
+    t.netOrders += c.netOrders
     t.revenue += c.revenue
     t.netRevenue += c.netRevenue
     t.margin += c.margin
     for (const ch of ['web', 'app', 'offline'] as const) {
       t.netRevenueByChannel[ch] += c.netRevenueByChannel[ch]
       t.ordersByChannel[ch] += c.ordersByChannel[ch]
+      t.netOrdersByChannel[ch] += c.netOrdersByChannel[ch]
+    }
+    for (const [brandId, slice] of Object.entries(c.brands)) {
+      const acc = (t.brands[brandId] ??= {
+        orders: 0,
+        netOrders: 0,
+        revenue: 0,
+        netRevenue: 0,
+        margin: 0,
+      })
+      acc.orders += slice.orders
+      acc.netOrders += slice.netOrders
+      acc.revenue += slice.revenue
+      acc.netRevenue += slice.netRevenue
+      acc.margin += slice.margin
     }
   })
   target.unattributed.orders += src.unattributed.orders
+  target.unattributed.netOrders += src.unattributed.netOrders
   target.unattributed.netRevenue += src.unattributed.netRevenue
   target.unattributed.margin += src.unattributed.margin
   for (const ch of ['web', 'app', 'offline'] as const) {
@@ -299,6 +401,9 @@ export function generateDataset(seed: number = SEED): Dataset {
         }
 
         const orders1 = clicks * cr
+        // Бренды: доли категории, если у запроса нет своего набора.
+        const brandMix = item.brandMix ?? CATEGORY_BRAND_MIX[cat.id]
+
         const cohorts = buildCohorts({
           orders1,
           aov,
@@ -306,6 +411,7 @@ export function generateDataset(seed: number = SEED): Dataset {
           buyoutRate,
           repeatRate,
           channelShares,
+          brandMix,
         })
 
         // Неатрибуцированные покупки: доля от ВСЕХ покупок, которые дал источник.
@@ -332,6 +438,7 @@ export function generateDataset(seed: number = SEED): Dataset {
             cohorts,
             unattributed: {
               orders: unattOrders,
+              netOrders: unattOrders * buyoutRate,
               netRevenue: unattNet,
               margin: unattNet * marginRate,
               ordersByChannel: splitByChannels(unattOrders, unattShares),

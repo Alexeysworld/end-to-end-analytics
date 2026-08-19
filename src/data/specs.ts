@@ -89,6 +89,8 @@ export interface ItemSpec {
   cpc?: number
   /** Множитель повторяемости. */
   repeat?: number
+  /** Доли товарных брендов в покупках по этому запросу. */
+  brandMix?: Record<string, number>
   /** Пояснение к запросу — показываем подсказкой в таблице. */
   note?: string
 }
@@ -148,7 +150,12 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
       {
         name: 'Бренд + категория',
         items: [
-          { name: '[бренд] куртка', aov: 1.5, marginRate: 0.24 },
+          {
+            name: '[бренд] куртка',
+            aov: 1.5,
+            marginRate: 0.24,
+            brandMix: { fjord: 0.42, nordvik: 0.24, kozha: 0.18, vetrograd: 0.16 },
+          },
           { name: '[бренд] носки', aov: 0.35, marginRate: 0.38, buyout: 1.12, repeat: 1.3 },
         ],
       },
@@ -183,6 +190,7 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
             cr: 1.25,
             cpc: 0.72,
             repeat: 0.45,
+            brandMix: { basico: 0.58, vetrograd: 0.3, fjord: 0.12 },
             note: 'Интент дешевизны: конвертит хорошо, но чек вдвое ниже и маржинальность 13%. Скидку сюда давать нельзя — маржи уже нет.',
           },
           {
@@ -194,10 +202,20 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
             cr: 1.1,
             cpc: 0.8,
             repeat: 0.6,
+            brandMix: { basico: 0.42, vetrograd: 0.4, fjord: 0.18 },
             note: 'Та же проблема, что у «куртка дешёвая», но мягче.',
           },
-          { name: 'куртка женская зимняя', weight: 1.2, aov: 1.05 },
-          { name: 'куртка мужская зимняя', aov: 1.1 },
+          {
+            name: 'куртка женская зимняя',
+            weight: 1.2,
+            aov: 1.05,
+            brandMix: { vetrograd: 0.36, nordvik: 0.2, alpengrad: 0.16, fjord: 0.16, basico: 0.12 },
+          },
+          {
+            name: 'куртка мужская зимняя',
+            aov: 1.1,
+            brandMix: { vetrograd: 0.32, alpengrad: 0.24, nordvik: 0.2, fjord: 0.14, basico: 0.1 },
+          },
         ],
       },
       {
@@ -212,6 +230,7 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
             cr: 0.72,
             cpc: 1.45,
             repeat: 1.35,
+            brandMix: { kozha: 0.68, nordvik: 0.18, fjord: 0.14 },
             note: 'Высокий чек и маржинальность выше категории. Есть запас по ставке — можно докупать.',
           },
           {
@@ -223,8 +242,16 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
             cr: 0.7,
             cpc: 1.4,
             repeat: 1.25,
+            brandMix: { kozha: 0.72, nordvik: 0.15, fjord: 0.13 },
           },
-          { name: 'пуховик зимний', weight: 0.7, aov: 1.35, marginRate: 0.26, cpc: 1.15 },
+          {
+            name: 'пуховик зимний',
+            weight: 0.7,
+            aov: 1.35,
+            marginRate: 0.26,
+            cpc: 1.15,
+            brandMix: { nordvik: 0.44, alpengrad: 0.28, fjord: 0.18, vetrograd: 0.1 },
+          },
         ],
       },
     ],
@@ -361,7 +388,13 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
         name: 'Интересы',
         items: [
           { name: 'интерес: одежда и обувь', weight: 1.3 },
-          { name: 'интерес: скидки и распродажи', cr: 1.15, aov: 0.7, marginRate: 0.17 },
+          {
+            name: 'интерес: скидки и распродажи',
+            cr: 1.15,
+            aov: 0.7,
+            marginRate: 0.17,
+            brandMix: { basico: 0.62, vetrograd: 0.3, fjord: 0.08 },
+          },
         ],
       },
     ],
@@ -385,7 +418,13 @@ export const CAMPAIGN_SPECS: CampaignSpec[] = [
       {
         name: 'Фид — верхняя одежда',
         items: [
-          { name: 'фид: куртки и пуховики', weight: 1.3, aov: 1.6, marginRate: 0.24 },
+          {
+            name: 'фид: куртки и пуховики',
+            weight: 1.3,
+            aov: 1.6,
+            marginRate: 0.24,
+            brandMix: { nordvik: 0.3, vetrograd: 0.26, alpengrad: 0.2, fjord: 0.14, kozha: 0.1 },
+          },
           { name: 'фид: пальто', aov: 1.4, marginRate: 0.25 },
         ],
       },

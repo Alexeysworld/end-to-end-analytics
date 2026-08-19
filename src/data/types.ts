@@ -32,6 +32,8 @@ export type NodeLevel = 'source' | 'campaign' | 'adgroup' | 'keyword'
 export interface OrderCohort {
   orderIndex: 1 | 2 | 3
   orders: number
+  /** Выкупленные заказы: те, что не отменили и не вернули. */
+  netOrders: number
   /** Выручка в заказе (до отмен и возвратов). */
   revenue: number
   /** Выручка по факту выкупа (после отмен и возвратов). */
@@ -42,6 +44,19 @@ export interface OrderCohort {
   netRevenueByChannel: Record<PurchaseChannel, number>
   /** Раскладка заказов по каналу покупки. */
   ordersByChannel: Record<PurchaseChannel, number>
+  /** Раскладка выкупленных заказов по каналу покупки. */
+  netOrdersByChannel: Record<PurchaseChannel, number>
+  /** Разложение по товарному бренду. Сумма по брендам равна значениям когорты. */
+  brands: Record<string, BrandSlice>
+}
+
+/** Срез когорты по одному товарному бренду. */
+export interface BrandSlice {
+  orders: number
+  netOrders: number
+  revenue: number
+  netRevenue: number
+  margin: number
 }
 
 /** Сырые метрики узла: то, что «измерено». Всё остальное — производные. */
@@ -56,6 +71,7 @@ export interface RawMetrics {
    */
   unattributed: {
     orders: number
+    netOrders: number
     netRevenue: number
     margin: number
     ordersByChannel: Record<PurchaseChannel, number>
@@ -134,19 +150,32 @@ export interface DerivedMetrics {
   spend: number
   cpc: number
   orders: number
+  /** Выкупленные заказы. */
+  netOrders: number
   revenue: number
+  /** Доход от выкупленных заказов. */
   netRevenue: number
   margin: number
   cpo: number
+  /** Стоимость выкупленного заказа. */
+  cpoNet: number
   aov: number
   /** ROI = маржа / расход − 1. 0% — точка безубыточности. */
   roi: number
   profit: number
   buyoutRate: number
+  /** Доля клиентов, сделавших следующий заказ. */
   repeatRate: number
+  /** Доля повторных заказов во всех заказах узла. */
+  repeatOrdersShare: number
   ordersByChannel: Record<PurchaseChannel, number>
+  netOrdersByChannel: Record<PurchaseChannel, number>
   netRevenueByChannel: Record<PurchaseChannel, number>
   channelShare: Record<PurchaseChannel, number>
+  /** Сайт и приложение вместе — как их объединяет статистика по источникам. */
+  onlineOrders: number
+  onlineNetRevenue: number
+  onlineShare: number
   unattributedOrders: number
   unattributedNetRevenue: number
   unattributedShare: number
