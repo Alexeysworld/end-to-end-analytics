@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CampaignCard } from './components/CampaignCard'
+import { ChannelBreakdown } from './components/ChannelBreakdown'
 import { CHANNEL_MODE_LABEL, RoiTable, plural, type ChannelMode } from './components/RoiTable'
 import { dataset } from './data/generate'
 import { derive } from './data/metrics'
@@ -121,7 +122,10 @@ function Shell() {
             onOnlyLosing={setOnlyLosing}
           />
         )}
-        {tab !== 'roi' && (
+        {tab === 'channels' && (
+          <ChannelBreakdown horizon={horizon} onOpenCampaign={setOpenCampaign} />
+        )}
+        {tab !== 'roi' && tab !== 'channels' && (
           <div className="rounded-md border border-dashed border-ink-300 bg-white p-8 text-center text-sm text-ink-400">
             Экран «{TABS.find((t) => t.id === tab)!.label}» — в работе.
           </div>
