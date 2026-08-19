@@ -1,0 +1,354 @@
+import { CAMPAIGN_SPECS, SOURCES, type CampaignSpec } from './specs'
+import type {
+  Dataset,
+  OrderCohort,
+  PurchaseChannel,
+  RawMetrics,
+  TreeNode,
+  WeekPoint,
+} from './types'
+
+export const SEED = 20260819
+
+/** mulberry32 — короткий детерминированный PRNG. */
+function rng(seed: number) {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+const zeroChannels = (): Record<PurchaseChannel, number> => ({ web: 0, app: 0, offline: 0 })
+
+/**
+ * Обратный счёт конверсии из целевого ROI первого заказа:
+ * roi = (cr · aov · buyout · marginRate) / cpc − 1
+ */
+function deriveCr(spec: CampaignSpec): number {
+  return ((1 + spec.targetRoiFirst) * spec.cpc) / (spec.aov * spec.buyoutRate * spec.marginRate)
+}
+
+/** Случайные веса, суммирующиеся в 1, с заметным, но не абсурдным разбросом. */
+function weights(n: number, rand: () => number, spread = 0.55): number[] {
+  const raw = Array.from({ length: n }, () => 1 + (rand() * 2 - 1) * spread)
+  const sum = raw.reduce((a, b) => a + b, 0)
+  return raw.map((w) => w / sum)
+}
+
+const jitter = (rand: () => number, amp: number) => 1 + (rand() * 2 - 1) * amp
+
+/** Повторные покупки смещаются в приложение и офлайн — там работает программа лояльности. */
+function shiftChannelsForRepeat(
+  base: Record<PurchaseChannel, number>,
+  orderIndex: 2 | 3,
+): Record<PurchaseChannel, number> {
+  const step = orderIndex === 2 ? 1 : 2
+  const toApp = Math.min(base.web * 0.45, 0.07 * step)
+  const toOffline = Math.min(base.web * 0.25, 0.04 * step)
+  const web = base.web - toApp - toOffline
+  return { web, app: base.app + toApp, offline: base.offline + toOffline }
+}
+
+function splitByChannels(
+  value: number,
+  shares: Record<PurchaseChannel, number>,
+): Record<PurchaseChannel, number> {
+  return { web: value * shares.web, app: value * shares.app, offline: value * shares.offline }
+}
+
+/** Три когорты заказов: первый, второй, третий и последующие. */
+function buildCohorts(args: {
+  orders1: number
+  aov: number
+  marginRate: number
+  buyoutRate: number
+  repeatRate: number
+  channelShares: Record<PurchaseChannel, number>
+}): OrderCohort[] {
+  const { orders1, aov, marginRate, buyoutRate, repeatRate, channelShares } = args
+  // Третий и последующие заказы приходят реже второго: затухание 0.8.
+  const counts: Record<1 | 2 | 3, number> = {
+    1: orders1,
+    2: orders1 * repeatRate,
+    3: orders1 * repeatRate * repeatRate * 0.8,
+  }
+  // Средний чек и выкуп немного лучше у постоянных клиентов.
+  const aovFactor: Record<1 | 2 | 3, number> = { 1: 1, 2: 1.05, 3: 1.1 }
+  const buyoutBonus: Record<1 | 2 | 3, number> = { 1: 0, 2: 0.025, 3: 0.04 }
+
+  return ([1, 2, 3] as const).map((orderIndex) => {
+    const orders = counts[orderIndex]
+    const cohortAov = aov * aovFactor[orderIndex]
+    const buyout = Math.min(0.97, buyoutRate + buyoutBonus[orderIndex])
+    const revenue = orders * cohortAov
+    const netRevenue = revenue * buyout
+    const shares =
+      orderIndex === 1 ? channelShares : shiftChannelsForRepeat(channelShares, orderIndex)
+    return {
+      orderIndex,
+      orders,
+      revenue,
+      netRevenue,
+      margin: netRevenue * marginRate,
+      netRevenueByChannel: splitByChannels(netRevenue, shares),
+      ordersByChannel: splitByChannels(orders, shares),
+    }
+  })
+}
+
+/**
+ * Пропорционально масштабирует все «заказные» величины узла.
+ * Нужно, чтобы после шума по запросам ROI кампании всё-таки попал
+ * в заданный спекой targetRoiFirst: иначе «пограничная» кампания
+ * уезжает с +6% на +20% и перестаёт быть пограничной.
+ */
+function scaleOrders(raw: RawMetrics, k: number): void {
+  for (const c of raw.cohorts) {
+    c.orders *= k
+    c.revenue *= k
+    c.netRevenue *= k
+    c.margin *= k
+    for (const ch of ['web', 'app', 'offline'] as const) {
+      c.netRevenueByChannel[ch] *= k
+      c.ordersByChannel[ch] *= k
+    }
+  }
+  raw.unattributed.orders *= k
+  raw.unattributed.netRevenue *= k
+  raw.unattributed.margin *= k
+  for (const ch of ['web', 'app', 'offline'] as const) {
+    raw.unattributed.ordersByChannel[ch] *= k
+  }
+}
+
+function emptyRaw(): RawMetrics {
+  return {
+    clicks: 0,
+    spend: 0,
+    cohorts: ([1, 2, 3] as const).map((orderIndex) => ({
+      orderIndex,
+      orders: 0,
+      revenue: 0,
+      netRevenue: 0,
+      margin: 0,
+      netRevenueByChannel: zeroChannels(),
+      ordersByChannel: zeroChannels(),
+    })),
+    unattributed: { orders: 0, netRevenue: 0, margin: 0, ordersByChannel: zeroChannels() },
+  }
+}
+
+function addRaw(target: RawMetrics, src: RawMetrics): RawMetrics {
+  target.clicks += src.clicks
+  target.spend += src.spend
+  src.cohorts.forEach((c, i) => {
+    const t = target.cohorts[i]
+    t.orders += c.orders
+    t.revenue += c.revenue
+    t.netRevenue += c.netRevenue
+    t.margin += c.margin
+    for (const ch of ['web', 'app', 'offline'] as const) {
+      t.netRevenueByChannel[ch] += c.netRevenueByChannel[ch]
+      t.ordersByChannel[ch] += c.ordersByChannel[ch]
+    }
+  })
+  target.unattributed.orders += src.unattributed.orders
+  target.unattributed.netRevenue += src.unattributed.netRevenue
+  target.unattributed.margin += src.unattributed.margin
+  for (const ch of ['web', 'app', 'offline'] as const) {
+    target.unattributed.ordersByChannel[ch] += src.unattributed.ordersByChannel[ch]
+  }
+  return target
+}
+
+function sumRaw(nodes: TreeNode[]): RawMetrics {
+  return nodes.reduce((acc, n) => addRaw(acc, n.raw), emptyRaw())
+}
+
+/** 13 недель динамики. Расход двигается по тренду с шумом, маржа следует за ним. */
+function buildWeeks(spec: CampaignSpec, raw: RawMetrics, rand: () => number): WeekPoint[] {
+  const n = 13
+  const trendWeights = Array.from({ length: n }, (_, i) => {
+    const t = i / (n - 1)
+    return Math.pow(spec.spendTrend, t * 2 - 1) * jitter(rand, 0.14)
+  })
+  const sumW = trendWeights.reduce((a, b) => a + b, 0)
+  // Эффективность плавает по неделям независимо от расхода — иначе график скучный.
+  const effWeights = trendWeights.map(() => jitter(rand, 0.18))
+  const marginFirstTotal = raw.cohorts[0].margin
+  const marginAllTotal = raw.cohorts.reduce((a, c) => a + c.margin, 0)
+  const effNorm = trendWeights.reduce((a, w, i) => a + (w / sumW) * effWeights[i], 0)
+
+  // Период заканчивается прошлым воскресеньем; недели считаем назад от 2026-08-17.
+  const lastMonday = new Date(Date.UTC(2026, 7, 17))
+  return trendWeights.map((w, i) => {
+    const share = w / sumW
+    const effShare = (share * effWeights[i]) / effNorm
+    const d = new Date(lastMonday.getTime() - (n - 1 - i) * 7 * 86400000)
+    const iso = d.toISOString().slice(0, 10)
+    return {
+      week: iso,
+      label: `${String(d.getUTCDate()).padStart(2, '0')}.${String(d.getUTCMonth() + 1).padStart(2, '0')}`,
+      clicks: raw.clicks * share,
+      spend: raw.spend * share,
+      orders: raw.cohorts[0].orders * effShare,
+      netRevenue: raw.cohorts[0].netRevenue * effShare,
+      marginFirst: marginFirstTotal * effShare,
+      marginAll: marginAllTotal * effShare,
+    }
+  })
+}
+
+export function generateDataset(seed: number = SEED): Dataset {
+  const rand = rng(seed)
+  const campaigns: TreeNode[] = []
+
+  const sources: TreeNode[] = SOURCES.map((s) => ({
+    id: `src:${s.id}`,
+    level: 'source' as const,
+    name: s.name,
+    parentId: null,
+    campaignId: null,
+    children: [],
+    raw: emptyRaw(),
+  }))
+
+  for (const spec of CAMPAIGN_SPECS) {
+    const source = sources.find((s) => s.id === `src:${spec.sourceId}`)!
+    const baseCr = deriveCr(spec)
+    const groupWeights = weights(spec.groups.length, rand, 0.4)
+
+    const campaign: TreeNode = {
+      id: `cmp:${spec.id}`,
+      level: 'campaign',
+      name: spec.name,
+      parentId: source.id,
+      campaignId: `cmp:${spec.id}`,
+      children: [],
+      raw: emptyRaw(),
+      meta: {
+        sourceId: source.id,
+        sourceName: source.name,
+        category: spec.category,
+        marginRate: spec.marginRate,
+        trafficKind: spec.trafficKind,
+        archetype: spec.archetype,
+        designNote: spec.designNote,
+      },
+    }
+
+    spec.groups.forEach((group, gi) => {
+      const groupClicks = spec.clicks * groupWeights[gi]
+      const itemWeights = weights(group.items.length, rand, 0.6)
+      const groupNode: TreeNode = {
+        id: `grp:${spec.id}:${gi}`,
+        level: 'adgroup',
+        name: group.name,
+        parentId: campaign.id,
+        campaignId: campaign.id,
+        children: [],
+        raw: emptyRaw(),
+      }
+
+      group.items.forEach((item, ki) => {
+        const clicks = Math.round(groupClicks * itemWeights[ki])
+        // CPC держим в заявленном диапазоне 15–1500 ₽ даже после шума.
+        const cpc = Math.min(1500, Math.max(15, spec.cpc * jitter(rand, 0.22)))
+        const cr = baseCr * jitter(rand, 0.28)
+        const aov = spec.aov * jitter(rand, 0.12)
+        const buyoutRate = Math.min(0.97, Math.max(0.78, spec.buyoutRate * jitter(rand, 0.04)))
+        const repeatRate = Math.max(0, Math.min(0.55, spec.repeatRate * jitter(rand, 0.22)))
+
+        // Раскладка по каналу покупки: шевелим доли и нормируем.
+        const rawShares = {
+          web: Math.max(0.02, spec.channelShares.web * jitter(rand, 0.22)),
+          app: Math.max(0.01, spec.channelShares.app * jitter(rand, 0.26)),
+          offline: Math.max(0.01, spec.channelShares.offline * jitter(rand, 0.3)),
+        }
+        const shareSum = rawShares.web + rawShares.app + rawShares.offline
+        const channelShares: Record<PurchaseChannel, number> = {
+          web: rawShares.web / shareSum,
+          app: rawShares.app / shareSum,
+          offline: rawShares.offline / shareSum,
+        }
+
+        const orders1 = clicks * cr
+        const cohorts = buildCohorts({
+          orders1,
+          aov,
+          marginRate: spec.marginRate,
+          buyoutRate,
+          repeatRate,
+          channelShares,
+        })
+
+        // Неатрибуцированные покупки: доля от ВСЕХ покупок, которые дал источник.
+        // unatt / (attributed + unatt) = share  →  unatt = attributed · s / (1 − s)
+        const s = Math.max(0, Math.min(0.45, spec.unattributedShare * jitter(rand, 0.2)))
+        const attributedOrders = cohorts.reduce((a, c) => a + c.orders, 0)
+        const attributedNet = cohorts.reduce((a, c) => a + c.netRevenue, 0)
+        const unattOrders = (attributedOrders * s) / (1 - s)
+        const unattNet = (attributedNet * s) / (1 - s) * jitter(rand, 0.08)
+        // Неопознанные покупки чаще офлайновые: на кассе клиента опознать сложнее.
+        const unattShares = { web: 0.34, app: 0.18, offline: 0.48 }
+
+        const keyword: TreeNode = {
+          id: `kw:${spec.id}:${gi}:${ki}`,
+          level: 'keyword',
+          name: item,
+          parentId: groupNode.id,
+          campaignId: campaign.id,
+          children: [],
+          raw: {
+            clicks,
+            spend: clicks * cpc,
+            cohorts,
+            unattributed: {
+              orders: unattOrders,
+              netRevenue: unattNet,
+              margin: unattNet * spec.marginRate,
+              ordersByChannel: splitByChannels(unattOrders, unattShares),
+            },
+          },
+        }
+        groupNode.children.push(keyword)
+      })
+
+      groupNode.raw = sumRaw(groupNode.children)
+      campaign.children.push(groupNode)
+    })
+
+    campaign.raw = sumRaw(campaign.children)
+
+    // Пин ROI первого заказа к спеке: считаем поправку на уровне кампании
+    // и применяем её ко всем запросам, поэтому разброс внутри кампании остаётся.
+    const actualRoiFirst = campaign.raw.spend
+      ? campaign.raw.cohorts[0].margin / campaign.raw.spend - 1
+      : 0
+    const correction = (1 + spec.targetRoiFirst) / (1 + actualRoiFirst)
+    for (const group of campaign.children) {
+      for (const keyword of group.children) scaleOrders(keyword.raw, correction)
+      group.raw = sumRaw(group.children)
+    }
+    campaign.raw = sumRaw(campaign.children)
+
+    campaign.weeks = buildWeeks(spec, campaign.raw, rand)
+    campaigns.push(campaign)
+    source.children.push(campaign)
+  }
+
+  for (const source of sources) source.raw = sumRaw(source.children)
+
+  return {
+    periodLabel: '19 мая — 17 августа 2026 · 13 недель',
+    sources,
+    campaigns,
+    totals: sumRaw(sources),
+    seed,
+  }
+}
+
+export const dataset = generateDataset()
