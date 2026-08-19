@@ -1,4 +1,4 @@
-import { CAMPAIGN_SPECS, SOURCES, type CampaignSpec } from './specs'
+import { CAMPAIGN_SPECS, CATEGORY_BY_ID, SOURCES, type CampaignSpec, type ItemSpec } from './specs'
 import type {
   Dataset,
   OrderCohort,
@@ -26,14 +26,23 @@ const zeroChannels = (): Record<PurchaseChannel, number> => ({ web: 0, app: 0, o
 /**
  * Обратный счёт конверсии из целевого ROI первого заказа:
  * roi = (cr · aov · buyout · marginRate) / cpc − 1
+ * Средний чек, маржинальность и выкуп берутся из товарной категории.
  */
 function deriveCr(spec: CampaignSpec): number {
-  return ((1 + spec.targetRoiFirst) * spec.cpc) / (spec.aov * spec.buyoutRate * spec.marginRate)
+  const cat = CATEGORY_BY_ID[spec.categoryId]
+  return ((1 + spec.targetRoiFirst) * spec.cpc) / (cat.aov * cat.buyoutRate * cat.marginRate)
 }
 
 /** Случайные веса, суммирующиеся в 1, с заметным, но не абсурдным разбросом. */
 function weights(n: number, rand: () => number, spread = 0.55): number[] {
   const raw = Array.from({ length: n }, () => 1 + (rand() * 2 - 1) * spread)
+  const sum = raw.reduce((a, b) => a + b, 0)
+  return raw.map((w) => w / sum)
+}
+
+/** Веса запросов: заданный в спеке вес плюс небольшой шум. */
+function itemWeights(items: ItemSpec[], rand: () => number): number[] {
+  const raw = items.map((it) => (it.weight ?? 1) * (1 + (rand() * 2 - 1) * 0.18))
   const sum = raw.reduce((a, b) => a + b, 0)
   return raw.map((w) => w / sum)
 }
@@ -218,6 +227,7 @@ export function generateDataset(seed: number = SEED): Dataset {
 
   for (const spec of CAMPAIGN_SPECS) {
     const source = sources.find((s) => s.id === `src:${spec.sourceId}`)!
+    const cat = CATEGORY_BY_ID[spec.categoryId]
     const baseCr = deriveCr(spec)
     const groupWeights = weights(spec.groups.length, rand, 0.4)
 
@@ -232,8 +242,11 @@ export function generateDataset(seed: number = SEED): Dataset {
       meta: {
         sourceId: source.id,
         sourceName: source.name,
-        category: spec.category,
-        marginRate: spec.marginRate,
+        category: cat.name,
+        categoryId: cat.id,
+        // Заполняется после сборки запросов: зависит от переопределений.
+        marginRate: cat.marginRate,
+        roiBeforeReturns: 0,
         trafficKind: spec.trafficKind,
         archetype: spec.archetype,
         designNote: spec.designNote,
@@ -242,7 +255,7 @@ export function generateDataset(seed: number = SEED): Dataset {
 
     spec.groups.forEach((group, gi) => {
       const groupClicks = spec.clicks * groupWeights[gi]
-      const itemWeights = weights(group.items.length, rand, 0.6)
+      const kWeights = itemWeights(group.items, rand)
       const groupNode: TreeNode = {
         id: `grp:${spec.id}:${gi}`,
         level: 'adgroup',
@@ -254,13 +267,23 @@ export function generateDataset(seed: number = SEED): Dataset {
       }
 
       group.items.forEach((item, ki) => {
-        const clicks = Math.round(groupClicks * itemWeights[ki])
+        const clicks = Math.round(groupClicks * kWeights[ki])
         // CPC держим в заявленном диапазоне 15–1500 ₽ даже после шума.
-        const cpc = Math.min(1500, Math.max(15, spec.cpc * jitter(rand, 0.22)))
-        const cr = baseCr * jitter(rand, 0.28)
-        const aov = spec.aov * jitter(rand, 0.12)
-        const buyoutRate = Math.min(0.97, Math.max(0.78, spec.buyoutRate * jitter(rand, 0.04)))
-        const repeatRate = Math.max(0, Math.min(0.55, spec.repeatRate * jitter(rand, 0.22)))
+        const cpc = Math.min(
+          1500,
+          Math.max(15, spec.cpc * (item.cpc ?? 1) * jitter(rand, 0.14)),
+        )
+        const cr = baseCr * (item.cr ?? 1) * jitter(rand, 0.18)
+        const aov = cat.aov * (item.aov ?? 1) * jitter(rand, 0.1)
+        const marginRate = item.marginRate ?? cat.marginRate
+        const buyoutRate = Math.min(
+          0.97,
+          Math.max(0.5, cat.buyoutRate * (item.buyout ?? 1) * jitter(rand, 0.04)),
+        )
+        const repeatRate = Math.max(
+          0,
+          Math.min(0.6, spec.repeatRate * (item.repeat ?? 1) * jitter(rand, 0.18)),
+        )
 
         // Раскладка по каналу покупки: шевелим доли и нормируем.
         const rawShares = {
@@ -279,7 +302,7 @@ export function generateDataset(seed: number = SEED): Dataset {
         const cohorts = buildCohorts({
           orders1,
           aov,
-          marginRate: spec.marginRate,
+          marginRate,
           buyoutRate,
           repeatRate,
           channelShares,
@@ -298,7 +321,8 @@ export function generateDataset(seed: number = SEED): Dataset {
         const keyword: TreeNode = {
           id: `kw:${spec.id}:${gi}:${ki}`,
           level: 'keyword',
-          name: item,
+          name: item.name,
+          note: item.note,
           parentId: groupNode.id,
           campaignId: campaign.id,
           children: [],
@@ -309,7 +333,7 @@ export function generateDataset(seed: number = SEED): Dataset {
             unattributed: {
               orders: unattOrders,
               netRevenue: unattNet,
-              margin: unattNet * spec.marginRate,
+              margin: unattNet * marginRate,
               ordersByChannel: splitByChannels(unattOrders, unattShares),
             },
           },
@@ -334,6 +358,15 @@ export function generateDataset(seed: number = SEED): Dataset {
       group.raw = sumRaw(group.children)
     }
     campaign.raw = sumRaw(campaign.children)
+
+    // Фактическая маржинальность и ROI до возвратов — уже по собранным числам.
+    const c1 = campaign.raw.cohorts[0]
+    campaign.meta!.marginRate = c1.netRevenue ? c1.margin / c1.netRevenue : cat.marginRate
+    campaign.meta!.roiBeforeReturns = campaign.raw.spend
+      ? (c1.revenue * (c1.netRevenue ? c1.margin / c1.netRevenue : cat.marginRate)) /
+          campaign.raw.spend -
+        1
+      : 0
 
     campaign.weeks = buildWeeks(spec, campaign.raw, rand)
     campaigns.push(campaign)

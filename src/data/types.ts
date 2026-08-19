@@ -86,6 +86,8 @@ export interface TreeNode {
   campaignId: string | null
   children: TreeNode[]
   raw: RawMetrics
+  /** Только у запросов: короткое пояснение, почему запрос ведёт себя так. */
+  note?: string
   /** Только у кампаний: контекст, который нужен карточке. */
   meta?: CampaignMeta
   /** Только у кампаний: недельная динамика. */
@@ -95,9 +97,13 @@ export interface TreeNode {
 export interface CampaignMeta {
   sourceId: string
   sourceName: string
-  /** Товарная категория задаёт маржинальность. */
+  /** Товарная категория задаёт средний чек, маржинальность и долю выкупа. */
   category: string
+  categoryId: string
+  /** Фактическая маржинальность кампании: категория плюс переопределения запросов. */
   marginRate: number
+  /** ROI по заказанной выручке, без учёта отмен и возвратов. */
+  roiBeforeReturns: number
   /** Тип трафика — влияет на долю мобильных покупок и повторяемость. */
   trafficKind: 'brand' | 'warm' | 'cold' | 'retargeting' | 'influencer'
   /** Заложенный в генератор архетип — для отладки и README, в UI не показываем как ярлык. */
@@ -107,12 +113,20 @@ export interface CampaignMeta {
 }
 
 export type Archetype =
+  /** Прибыльная на любом горизонте. */
   | 'profitable'
+  /** Убыточная на любом горизонте. */
   | 'unprofitable'
+  /** Убыточная на первом заказе, прибыльная на всех покупках. */
   | 'repeat-saves'
+  /** Разворачивается за счёт повторных, и больше половины покупок — в приложении. */
   | 'mobile-heavy'
+  /** Большая неатрибуцированная часть. */
   | 'unattributed-heavy'
-  | 'marginal'
+  /** Внутри кампании запросы с противоположной экономикой. */
+  | 'mixed-inside'
+  /** Убивают возвраты: по заказанной выручке ок, по факту выкупа нет. */
+  | 'returns-heavy'
 
 /** Производные метрики. Считаются для выбранного горизонта. */
 export interface DerivedMetrics {

@@ -33,14 +33,15 @@ function row(node: TreeNode) {
 }
 
 const src = dataset.sources[0]
-const cmp = src.children.find((c) => c.id === 'cmp:ya-competitors')!
-const grp = cmp.children[0]
+const cmp = src.children.find((c) => c.id === 'cmp:ya-jackets')!
+const grp = cmp.children[1]
 const kw = grp.children[0]
+const kwBad = cmp.children[0].children[0]
 
 console.log('='.repeat(92))
 console.log('ПРИМЕР СТРОКИ НА КАЖДОМ УРОВНЕ ИЕРАРХИИ  (сид ' + dataset.seed + ', период: ' + dataset.periodLabel + ')')
 console.log('='.repeat(92))
-;[src, cmp, grp, kw].forEach(row)
+;[src, cmp, grp, kw, kwBad].forEach(row)
 
 console.log('\n' + '='.repeat(92))
 console.log('КРИВАЯ ОКУПАЕМОСТИ КАМПАНИИ «' + cmp.name + '»')
@@ -50,6 +51,29 @@ for (const p of cumulativeRoi(cmp.raw)) {
 }
 const gap = repeatRateGapToBreakEven(cmp.raw)
 console.log(`  не хватает повторяемости до ROI 0: ${gap === null ? '—' : (gap * 100).toFixed(1) + ' п.п.'}`)
+
+console.log('\n' + '='.repeat(92))
+console.log('ЗАПРОСЫ ВНУТРИ «' + cmp.name + '»: РАЗНАЯ ЭКОНОМИКА В ОДНОЙ КАМПАНИИ')
+console.log('='.repeat(92))
+console.log('запрос'.padEnd(32) + 'клики'.padStart(8) + 'CPC'.padStart(7) + 'ср.чек'.padStart(9) + 'марж.'.padStart(7) + 'выкуп'.padStart(7) + 'ROI 1-й'.padStart(9) + 'ROI все'.padStart(9) + 'b/e CPC'.padStart(9))
+for (const g of cmp.children) {
+  for (const k of g.children) {
+    const f = derive(k.raw, 'first')
+    const a = derive(k.raw, 'all')
+    const mr = k.raw.cohorts[0].margin / k.raw.cohorts[0].netRevenue
+    console.log(
+      k.name.slice(0, 31).padEnd(32) +
+        money(f.clicks).padStart(8) +
+        f.cpc.toFixed(0).padStart(7) +
+        money(f.aov).padStart(9) +
+        `${(mr * 100).toFixed(0)}%`.padStart(7) +
+        `${(f.buyoutRate * 100).toFixed(0)}%`.padStart(7) +
+        pct(f.roi).padStart(9) +
+        pct(a.roi).padStart(9) +
+        f.breakEvenCpc.toFixed(0).padStart(9),
+    )
+  }
+}
 
 console.log('\n' + '='.repeat(92))
 console.log('ВСЕ КАМПАНИИ: ПРОВЕРКА, ЧТО ЕСТЬ ВСЕ ИНТЕРЕСНЫЕ ТИПЫ')
@@ -63,6 +87,7 @@ console.log(
     'прил.'.padStart(7) +
     'офлайн'.padStart(8) +
     'н/атр.'.padStart(8) +
+    'выкуп'.padStart(7) +
     '  архетип',
 )
 for (const c of dataset.campaigns) {
@@ -78,6 +103,7 @@ for (const c of dataset.campaigns) {
       `${(a.channelShare.app * 100).toFixed(0)}%`.padStart(7) +
       `${(a.channelShare.offline * 100).toFixed(0)}%`.padStart(8) +
       `${(f.unattributedShare * 100).toFixed(0)}%`.padStart(8) +
+      `${(f.buyoutRate * 100).toFixed(0)}%`.padStart(7) +
       `  ${c.meta!.archetype}${flip}`,
   )
 }
@@ -95,4 +121,5 @@ console.log(`  расход ${money(tf.spend)} ₽ · клики ${money(tf.clic
 console.log(`  ROI по первому заказу ${pct(tf.roi)} · ROI по всем покупкам ${pct(ta.roi)}`)
 console.log(`  не атрибуцировано: ${money(tf.unattributedOrders)} заказов, ${money(tf.unattributedNetRevenue)} ₽ выкупа (${(tf.unattributedShare * 100).toFixed(1)}%)`)
 console.log(`  бюджет в кампаниях, которые убыточны на 1-м заказе и прибыльны на всех: ${money(flipSpend)} ₽ (${((flipSpend / tf.spend) * 100).toFixed(1)}% расхода)`)
+console.log(`  выкуп по аккаунту: ${(tf.buyoutRate * 100).toFixed(1)}% от заказанной выручки`)
 console.log(`  запросов в дереве: ${dataset.campaigns.reduce((a, c) => a + c.children.reduce((b, g) => b + g.children.length, 0), 0)} · групп: ${dataset.campaigns.reduce((a, c) => a + c.children.length, 0)} · кампаний: ${dataset.campaigns.length}`)
