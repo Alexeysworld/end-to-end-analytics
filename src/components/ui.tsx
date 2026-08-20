@@ -232,7 +232,7 @@ export function Metric({
     <div>
       <div className="text-2xs uppercase tracking-wide text-ink-400">{label}</div>
       <div
-        className={`num mt-0.5 text-[15px] font-semibold ${
+        className={`mt-0.5 font-mono text-[15px] font-semibold tabular-nums ${
           tone === 'pos' ? 'text-pos' : tone === 'neg' ? 'text-neg' : 'text-ink-900'
         }`}
       >
