@@ -78,6 +78,12 @@ function Shell() {
             <span className="rounded border border-warn/30 bg-warn-soft px-1 py-px text-2xs font-medium text-warn">
               прототип на синтетических данных
             </span>
+            <span
+              className="font-mono text-2xs text-ink-300"
+              title="Ревизия, из которой собрана эта страница"
+            >
+              {__BUILD__}
+            </span>
           </div>
           <button
             onClick={() => setNotesOpen((v) => !v)}

@@ -36,6 +36,8 @@ interface NotesApi {
   add: (note: Omit<Note, 'id' | 'createdAt'>) => void
   remove: (id: string) => void
   exportJson: () => void
+  /** Сообщение о результате выгрузки: показываем рядом с кнопкой. */
+  exportStatus: string | null
   /** Контекст отчёта, который подмешивается в каждую новую заметку. */
   reportContext: Record<string, string>
   setReportContext: (ctx: Record<string, string>) => void
@@ -71,6 +73,8 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     setNotes((prev) => prev.filter((n) => n.id !== id))
   }, [])
 
+  const [exportStatus, setExportStatus] = useState<string | null>(null)
+
   const exportJson = useCallback(() => {
     const payload = {
       prototype: 'Сквозная аналитика Mindbox — прототип',
@@ -78,16 +82,55 @@ export function NotesProvider({ children }: { children: ReactNode }) {
       notesCount: notes.length,
       notes,
     }
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: 'application/json;charset=utf-8',
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `mindbox-prototype-notes-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    const json = JSON.stringify(payload, null, 2)
+    const filename = `mindbox-prototype-notes-${new Date().toISOString().slice(0, 10)}.json`
+
+    /** Локально в браузере: обычная ссылка со Blob. */
+    const saveViaLink = () => {
+      const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+
+    // Когда страница открыта как артефакт, скачивание идёт только через
+    // window.claude.downloads — обычная ссылка там ничего не делает.
+    const host = window.claude
+    if (!host) {
+      saveViaLink()
+      return
+    }
+    setExportStatus('Готовим файл…')
+    host
+      .use('downloads')
+      .then((downloads) => {
+        if (!downloads) {
+          setExportStatus('Скачивание здесь недоступно — скопируйте заметки из панели')
+          return
+        }
+        return downloads.save({ filename, data: json }).then(() => {
+          setExportStatus('Файл сохранён')
+        })
+      })
+      .catch((e: { code?: string }) => {
+        // «declined» — человек сам отказался, повторять и объяснять нечего.
+        if (e?.code === 'declined') {
+          setExportStatus(null)
+          return
+        }
+        setExportStatus('Не удалось сохранить файл')
+      })
   }, [notes])
+
+  // Сообщение живёт несколько секунд, потом убирается само.
+  useEffect(() => {
+    if (!exportStatus) return
+    const id = window.setTimeout(() => setExportStatus(null), 4000)
+    return () => window.clearTimeout(id)
+  }, [exportStatus])
 
   const countFor = useCallback(
     (blockId: string) => notes.filter((n) => n.blockId === blockId).length,
@@ -95,8 +138,17 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   )
 
   const api = useMemo<NotesApi>(
-    () => ({ notes, countFor, add, remove, exportJson, reportContext, setReportContext }),
-    [notes, countFor, add, remove, exportJson, reportContext, setReportContext],
+    () => ({
+      notes,
+      countFor,
+      add,
+      remove,
+      exportJson,
+      exportStatus,
+      reportContext,
+      setReportContext,
+    }),
+    [notes, countFor, add, remove, exportJson, exportStatus, reportContext, setReportContext],
   )
 
   return <NotesCtx.Provider value={api}>{children}</NotesCtx.Provider>
@@ -226,7 +278,7 @@ export function NoteButton({
 
 /** Панель со всеми заметками и выгрузкой в JSON. */
 export function NotesPanel({ onClose }: { onClose: () => void }) {
-  const { notes, remove, exportJson } = useNotes()
+  const { notes, remove, exportJson, exportStatus } = useNotes()
   const byScreen = useMemo(() => {
     const m = new Map<string, Note[]>()
     for (const n of notes) m.set(n.screen, [...(m.get(n.screen) ?? []), n])
@@ -238,7 +290,9 @@ export function NotesPanel({ onClose }: { onClose: () => void }) {
       <header className="flex items-center justify-between border-b border-ink-200 px-3 py-2">
         <div>
           <h2 className="text-base font-semibold">Заметки ревью</h2>
-          <p className="text-xs text-ink-500">{notes.length} шт. · только в памяти страницы</p>
+          <p className="text-xs text-ink-500">
+            {exportStatus ?? `${notes.length} шт. · только в памяти страницы`}
+          </p>
         </div>
         <div className="flex items-center gap-1.5">
           <button
