@@ -9,7 +9,8 @@
     "build:page": "vite build && node scripts/build-page.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "data:sample": "tsx scripts/sample.ts"
+    "data:sample": "tsx scripts/sample.ts",
+    "export:lovable": "tsx scripts/export-lovable.ts"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -17,6 +18,7 @@
     "recharts": "^2.13.3"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",

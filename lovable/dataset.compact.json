@@ -1,0 +1,2772 @@
+{
+  "meta": {
+    "title": "Сквозная аналитика — синтетические данные",
+    "advertiser": "Магазин одежды «Северный склон»",
+    "periodLabel": "19 мая — 17 августа 2026 · 13 недель",
+    "currency": "RUB",
+    "seed": 20260819,
+    "generatedFrom": "https://github.com/Alexeysworld/end-to-end-analytics",
+    "definitions": {
+      "roi": "маржа / расход − 1. Ноль — точка безубыточности",
+      "horizonFirst": "только первый заказ клиента",
+      "horizonAll": "первый и все последующие заказы клиента",
+      "netOrders": "выкупленные заказы: без отмен и возвратов",
+      "netRevenue": "доход от выкупленных заказов",
+      "webOnlyRoi": "ROI, каким его видит сквозная аналитика по куке: только покупки на сайте и только первый заказ",
+      "unattributed": "покупки, которые не удалось связать с источником. В ROI не входят — ни в числитель, ни в знаменатель",
+      "allocatedSpend": "расход, отнесённый на бренд внутри каждого запроса пропорционально числу заказов"
+    },
+    "variant": "compact: только источники и кампании"
+  },
+  "purchaseChannels": [
+    {
+      "id": "web",
+      "label": "Веб"
+    },
+    {
+      "id": "app",
+      "label": "Приложение"
+    },
+    {
+      "id": "offline",
+      "label": "Офлайн"
+    }
+  ],
+  "categories": [
+    {
+      "id": "jackets",
+      "name": "Куртки и верхняя одежда",
+      "aov": 11000,
+      "marginRate": 0.24,
+      "buyoutRate": 0.86,
+      "note": "Большой чек при низкой маржинальности: 1 000 ₽ выручки приносит 240 ₽ маржи."
+    },
+    {
+      "id": "pants",
+      "name": "Штаны и брюки",
+      "aov": 5400,
+      "marginRate": 0.31,
+      "buyoutRate": 0.68,
+      "note": "Треть заказов возвращают по размеру. Разрыв между выручкой и выкупом — главный риск категории."
+    },
+    {
+      "id": "accessories",
+      "name": "Аксессуары: носки, ремни",
+      "aov": 2100,
+      "marginRate": 0.38,
+      "buyoutRate": 0.94,
+      "note": "Маленький чек, высокая маржинальность и почти нет возвратов. Живёт только на дешёвом трафике."
+    },
+    {
+      "id": "mix",
+      "name": "Микс — весь ассортимент",
+      "aov": 7600,
+      "marginRate": 0.29,
+      "buyoutRate": 0.83,
+      "note": "Средневзвешенные значения по всему каталогу. Для кампаний без товарного фокуса."
+    },
+    {
+      "id": "workwear",
+      "name": "Спецодежда оптом",
+      "aov": 92000,
+      "marginRate": 0.15,
+      "buyoutRate": 0.8,
+      "note": "B2B-направление: огромный чек, маржинальность вдвое ниже розницы."
+    }
+  ],
+  "brands": [
+    {
+      "id": "nordvik",
+      "name": "Nordvik",
+      "kind": "премиум",
+      "note": "Премиальные пуховики. Дорого, маржинально, почти не возвращают."
+    },
+    {
+      "id": "kozha",
+      "name": "Kozha & Co",
+      "kind": "премиум",
+      "note": "Кожаные куртки и ремни. Самый высокий чек в отчёте."
+    },
+    {
+      "id": "alpengrad",
+      "name": "Alpengrad",
+      "kind": "премиум",
+      "note": "Технологичная горнолыжка. Высокий чек, но маржинальность средняя."
+    },
+    {
+      "id": "vetrograd",
+      "name": "Ветроград",
+      "kind": "масс-маркет",
+      "note": "Основной объём в куртках. Средний по всем показателям."
+    },
+    {
+      "id": "basico",
+      "name": "Basico",
+      "kind": "дискаунт",
+      "note": "Дискаунт. Много заказов, мало маржи, много возвратов и никто не возвращается."
+    },
+    {
+      "id": "fjord",
+      "name": "Fjord Line (СТМ)",
+      "kind": "СТМ",
+      "note": "Собственная торговая марка: маржинальность в 1.7 раза выше средней. Главный вывод вкладки — трафик надо гнать сюда."
+    },
+    {
+      "id": "denimlab",
+      "name": "Denim Lab",
+      "kind": "масс-маркет",
+      "note": "Джинсы. Худший выкуп в отчёте — размерная сетка."
+    },
+    {
+      "id": "classicline",
+      "name": "Classic Line",
+      "kind": "масс-маркет",
+      "note": "Классические брюки. Возвратов мало: покупают по знакомому размеру."
+    },
+    {
+      "id": "profspec",
+      "name": "Профспец",
+      "kind": "масс-маркет",
+      "note": "Спецодежда для B2B-направления. Отдельный бренд, чтобы опт не смешивался с розницей."
+    },
+    {
+      "id": "sockstar",
+      "name": "Sockstar",
+      "kind": "масс-маркет",
+      "note": "Носки и мелочь. Копеечный чек, зато возвращаются за новой партией."
+    }
+  ],
+  "totals": {
+    "first": {
+      "clicks": 76865,
+      "spend": 3188219,
+      "cpc": 41,
+      "orders": 1860.7325,
+      "netOrders": 1545.1178,
+      "revenue": 13521638,
+      "netRevenue": 11173081,
+      "margin": 2963636,
+      "profit": -224583,
+      "cpo": 1713,
+      "cpoNet": 2063,
+      "aov": 7267,
+      "roi": -0.0704,
+      "buyoutRate": 0.8263,
+      "repeatRate": 0.2677,
+      "repeatOrdersShare": 0.2526,
+      "breakEvenCpc": 39,
+      "ordersByChannel": {
+        "web": 904.4001,
+        "app": 669.5536,
+        "offline": 286.7788
+      },
+      "netRevenueByChannel": {
+        "web": 5639669,
+        "app": 3936743,
+        "offline": 1596669
+      },
+      "channelShare": {
+        "web": 0.486,
+        "app": 0.3598,
+        "offline": 0.1541
+      },
+      "onlineOrders": 1573.9537,
+      "onlineNetRevenue": 9576412,
+      "onlineShare": 0.8459,
+      "unattributedOrders": 456.4369,
+      "unattributedNetRevenue": 2949810,
+      "unattributedShare": 0.1549
+    },
+    "all": {
+      "clicks": 76865,
+      "spend": 3188219,
+      "cpc": 41,
+      "orders": 2489.5185,
+      "netOrders": 2098.884,
+      "revenue": 18034173,
+      "netRevenue": 15094167,
+      "margin": 4061513,
+      "profit": 873294,
+      "cpo": 1281,
+      "cpoNet": 1519,
+      "aov": 7244,
+      "roi": 0.2739,
+      "buyoutRate": 0.837,
+      "repeatRate": 0.2677,
+      "repeatOrdersShare": 0.2526,
+      "breakEvenCpc": 53,
+      "ordersByChannel": {
+        "web": 1096.4582,
+        "app": 980.3387,
+        "offline": 412.7216
+      },
+      "netRevenueByChannel": {
+        "web": 6862318,
+        "app": 5889140,
+        "offline": 2342709
+      },
+      "channelShare": {
+        "web": 0.4404,
+        "app": 0.3938,
+        "offline": 0.1658
+      },
+      "onlineOrders": 2076.797,
+      "onlineNetRevenue": 12751458,
+      "onlineShare": 0.8342,
+      "unattributedOrders": 456.4369,
+      "unattributedNetRevenue": 2949810,
+      "unattributedShare": 0.1549
+    },
+    "unattributed": {
+      "orders": 456.4369,
+      "netOrders": 377.0995,
+      "netRevenue": 2949810,
+      "margin": 769956
+    }
+  },
+  "brandTotals": {
+    "first": [
+      {
+        "brandId": "nordvik",
+        "orders": 162.349,
+        "netOrders": 149.4903,
+        "revenue": 2509459,
+        "netRevenue": 2234633,
+        "margin": 620734,
+        "allocatedSpend": 349579,
+        "roi": 0.7757,
+        "buyoutRate": 0.8905,
+        "returnRate": 0.1095,
+        "aov": 15457,
+        "marginRate": 0.2778,
+        "repeatOrdersShare": 0.2546,
+        "revenueShare": 0.2
+      },
+      {
+        "brandId": "kozha",
+        "orders": 183.1951,
+        "netOrders": 176.0017,
+        "revenue": 2139181,
+        "netRevenue": 1970043,
+        "margin": 576424,
+        "allocatedSpend": 352728,
+        "roi": 0.6342,
+        "buyoutRate": 0.9209,
+        "returnRate": 0.0791,
+        "aov": 11677,
+        "marginRate": 0.2926,
+        "repeatOrdersShare": 0.2891,
+        "revenueShare": 0.1763
+      },
+      {
+        "brandId": "vetrograd",
+        "orders": 338.1013,
+        "netOrders": 271.583,
+        "revenue": 2239508,
+        "netRevenue": 1757655,
+        "margin": 362091,
+        "allocatedSpend": 643492,
+        "roi": -0.4373,
+        "buyoutRate": 0.7848,
+        "returnRate": 0.2152,
+        "aov": 6624,
+        "marginRate": 0.206,
+        "repeatOrdersShare": 0.2303,
+        "revenueShare": 0.1573
+      },
+      {
+        "brandId": "fjord",
+        "orders": 259.2069,
+        "netOrders": 234.3653,
+        "revenue": 1498636,
+        "netRevenue": 1306054,
+        "margin": 501250,
+        "allocatedSpend": 354476,
+        "roi": 0.4141,
+        "buyoutRate": 0.8715,
+        "returnRate": 0.1285,
+        "aov": 5782,
+        "marginRate": 0.3838,
+        "repeatOrdersShare": 0.2706,
+        "revenueShare": 0.1169
+      },
+      {
+        "brandId": "alpengrad",
+        "orders": 65.5834,
+        "netOrders": 57.3128,
+        "revenue": 938098,
+        "netRevenue": 793179,
+        "margin": 178761,
+        "allocatedSpend": 176412,
+        "roi": 0.0133,
+        "buyoutRate": 0.8455,
+        "returnRate": 0.1545,
+        "aov": 14304,
+        "marginRate": 0.2254,
+        "repeatOrdersShare": 0.2227,
+        "revenueShare": 0.071
+      },
+      {
+        "brandId": "denimlab",
+        "orders": 202.5055,
+        "netOrders": 120.8131,
+        "revenue": 1305587,
+        "netRevenue": 768551,
+        "margin": 228457,
+        "allocatedSpend": 282160,
+        "roi": -0.1903,
+        "buyoutRate": 0.5887,
+        "returnRate": 0.4113,
+        "aov": 6447,
+        "marginRate": 0.2973,
+        "repeatOrdersShare": 0.2264,
+        "revenueShare": 0.0688
+      },
+      {
+        "brandId": "classicline",
+        "orders": 133.5469,
+        "netOrders": 123.2011,
+        "revenue": 783466,
+        "netRevenue": 713745,
+        "margin": 175494,
+        "allocatedSpend": 186388,
+        "roi": -0.0584,
+        "buyoutRate": 0.911,
+        "returnRate": 0.089,
+        "aov": 5867,
+        "marginRate": 0.2459,
+        "repeatOrdersShare": 0.2239,
+        "revenueShare": 0.0639
+      },
+      {
+        "brandId": "sockstar",
+        "orders": 267.0914,
+        "netOrders": 238.4555,
+        "revenue": 769461,
+        "netRevenue": 662222,
+        "margin": 187293,
+        "allocatedSpend": 217909,
+        "roi": -0.1405,
+        "buyoutRate": 0.8606,
+        "returnRate": 0.1394,
+        "aov": 2881,
+        "marginRate": 0.2828,
+        "repeatOrdersShare": 0.3109,
+        "revenueShare": 0.0593
+      },
+      {
+        "brandId": "basico",
+        "orders": 244.3318,
+        "netOrders": 170.0129,
+        "revenue": 894120,
+        "netRevenue": 609458,
+        "margin": 79501,
+        "allocatedSpend": 483940,
+        "roi": -0.8357,
+        "buyoutRate": 0.6816,
+        "returnRate": 0.3184,
+        "aov": 3659,
+        "marginRate": 0.1304,
+        "repeatOrdersShare": 0.2066,
+        "revenueShare": 0.0545
+      },
+      {
+        "brandId": "profspec",
+        "orders": 4.8211,
+        "netOrders": 3.8821,
+        "revenue": 444122,
+        "netRevenue": 357541,
+        "margin": 53631,
+        "allocatedSpend": 141135,
+        "roi": -0.62,
+        "buyoutRate": 0.8051,
+        "returnRate": 0.1949,
+        "aov": 92120,
+        "marginRate": 0.15,
+        "repeatOrdersShare": 0.1427,
+        "revenueShare": 0.032
+      }
+    ],
+    "all": [
+      {
+        "brandId": "nordvik",
+        "orders": 217.7986,
+        "netOrders": 202.6823,
+        "revenue": 3387514,
+        "netRevenue": 3046815,
+        "margin": 850609,
+        "allocatedSpend": 349579,
+        "roi": 1.4332,
+        "buyoutRate": 0.8994,
+        "returnRate": 0.1006,
+        "aov": 15553,
+        "marginRate": 0.2792,
+        "repeatOrdersShare": 0.2546,
+        "revenueShare": 0.2019
+      },
+      {
+        "brandId": "kozha",
+        "orders": 257.6909,
+        "netOrders": 250.1132,
+        "revenue": 2982723,
+        "netRevenue": 2775139,
+        "margin": 816840,
+        "allocatedSpend": 352728,
+        "roi": 1.3158,
+        "buyoutRate": 0.9304,
+        "returnRate": 0.0696,
+        "aov": 11575,
+        "marginRate": 0.2943,
+        "repeatOrdersShare": 0.2891,
+        "revenueShare": 0.1839
+      },
+      {
+        "brandId": "vetrograd",
+        "orders": 439.2622,
+        "netOrders": 356.3509,
+        "revenue": 2915198,
+        "netRevenue": 2306278,
+        "margin": 482497,
+        "allocatedSpend": 643492,
+        "roi": -0.2502,
+        "buyoutRate": 0.7911,
+        "returnRate": 0.2089,
+        "aov": 6637,
+        "marginRate": 0.2092,
+        "repeatOrdersShare": 0.2303,
+        "revenueShare": 0.1528
+      },
+      {
+        "brandId": "fjord",
+        "orders": 355.389,
+        "netOrders": 324.9304,
+        "revenue": 2022139,
+        "netRevenue": 1778959,
+        "margin": 693079,
+        "allocatedSpend": 354476,
+        "roi": 0.9552,
+        "buyoutRate": 0.8797,
+        "returnRate": 0.1203,
+        "aov": 5690,
+        "marginRate": 0.3896,
+        "repeatOrdersShare": 0.2706,
+        "revenueShare": 0.1179
+      },
+      {
+        "brandId": "alpengrad",
+        "orders": 84.3785,
+        "netOrders": 74.4443,
+        "revenue": 1227339,
+        "netRevenue": 1047631,
+        "margin": 236615,
+        "allocatedSpend": 176412,
+        "roi": 0.3413,
+        "buyoutRate": 0.8536,
+        "returnRate": 0.1464,
+        "aov": 14546,
+        "marginRate": 0.2259,
+        "repeatOrdersShare": 0.2227,
+        "revenueShare": 0.0694
+      },
+      {
+        "brandId": "denimlab",
+        "orders": 261.7541,
+        "netOrders": 158.9423,
+        "revenue": 1707838,
+        "netRevenue": 1021747,
+        "margin": 304307,
+        "allocatedSpend": 282160,
+        "roi": 0.0785,
+        "buyoutRate": 0.5983,
+        "returnRate": 0.4017,
+        "aov": 6525,
+        "marginRate": 0.2978,
+        "repeatOrdersShare": 0.2264,
+        "revenueShare": 0.0677
+      },
+      {
+        "brandId": "sockstar",
+        "orders": 387.5865,
+        "netOrders": 349.5188,
+        "revenue": 1125984,
+        "netRevenue": 980878,
+        "margin": 278427,
+        "allocatedSpend": 217909,
+        "roi": 0.2777,
+        "buyoutRate": 0.8711,
+        "returnRate": 0.1289,
+        "aov": 2905,
+        "marginRate": 0.2839,
+        "repeatOrdersShare": 0.3109,
+        "revenueShare": 0.065
+      },
+      {
+        "brandId": "classicline",
+        "orders": 172.0647,
+        "netOrders": 161.5416,
+        "revenue": 1021619,
+        "netRevenue": 945825,
+        "margin": 233013,
+        "allocatedSpend": 186388,
+        "roi": 0.2502,
+        "buyoutRate": 0.9258,
+        "returnRate": 0.0742,
+        "aov": 5937,
+        "marginRate": 0.2464,
+        "repeatOrdersShare": 0.2239,
+        "revenueShare": 0.0627
+      },
+      {
+        "brandId": "basico",
+        "orders": 307.9705,
+        "netOrders": 215.8106,
+        "revenue": 1121698,
+        "netRevenue": 768483,
+        "margin": 102765,
+        "allocatedSpend": 483940,
+        "roi": -0.7876,
+        "buyoutRate": 0.6851,
+        "returnRate": 0.3149,
+        "aov": 3642,
+        "marginRate": 0.1337,
+        "repeatOrdersShare": 0.2066,
+        "revenueShare": 0.0509
+      },
+      {
+        "brandId": "profspec",
+        "orders": 5.6234,
+        "netOrders": 4.5495,
+        "revenue": 522122,
+        "netRevenue": 422413,
+        "margin": 63362,
+        "allocatedSpend": 141135,
+        "roi": -0.5511,
+        "buyoutRate": 0.809,
+        "returnRate": 0.191,
+        "aov": 92848,
+        "marginRate": 0.15,
+        "repeatOrdersShare": 0.1427,
+        "revenueShare": 0.028
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "src:yandex",
+      "parentId": null,
+      "level": "source",
+      "name": "Яндекс Директ",
+      "first": {
+        "clicks": 38826,
+        "spend": 1838437,
+        "cpc": 47,
+        "orders": 1113.121,
+        "netOrders": 912.8213,
+        "revenue": 8732671,
+        "netRevenue": 7162024,
+        "margin": 1877806,
+        "profit": 39369,
+        "cpo": 1652,
+        "cpoNet": 2014,
+        "aov": 7845,
+        "roi": 0.0214,
+        "buyoutRate": 0.8201,
+        "repeatRate": 0.2797,
+        "repeatOrdersShare": 0.263,
+        "breakEvenCpc": 48,
+        "ordersByChannel": {
+          "web": 584.2914,
+          "app": 359.19,
+          "offline": 169.6396
+        },
+        "netRevenueByChannel": {
+          "web": 3934404,
+          "app": 2194885,
+          "offline": 1032735
+        },
+        "channelShare": {
+          "web": 0.5249,
+          "app": 0.3227,
+          "offline": 0.1524
+        },
+        "onlineOrders": 943.4814,
+        "onlineNetRevenue": 6129289,
+        "onlineShare": 0.8476,
+        "unattributedOrders": 197.7377,
+        "unattributedNetRevenue": 1278212,
+        "unattributedShare": 0.1158
+      },
+      "all": {
+        "clicks": 38826,
+        "spend": 1838437,
+        "cpc": 47,
+        "orders": 1510.2595,
+        "netOrders": 1258.4731,
+        "revenue": 11573635,
+        "netRevenue": 9602336,
+        "margin": 2575781,
+        "profit": 737344,
+        "cpo": 1217,
+        "cpoNet": 1461,
+        "aov": 7663,
+        "roi": 0.4011,
+        "buyoutRate": 0.8297,
+        "repeatRate": 0.2797,
+        "repeatOrdersShare": 0.263,
+        "breakEvenCpc": 66,
+        "ordersByChannel": {
+          "web": 723.3702,
+          "app": 538.1879,
+          "offline": 248.7015
+        },
+        "netRevenueByChannel": {
+          "web": 4835814,
+          "app": 3269850,
+          "offline": 1496672
+        },
+        "channelShare": {
+          "web": 0.479,
+          "app": 0.3564,
+          "offline": 0.1647
+        },
+        "onlineOrders": 1261.558,
+        "onlineNetRevenue": 8105665,
+        "onlineShare": 0.8353,
+        "unattributedOrders": 197.7377,
+        "unattributedNetRevenue": 1278212,
+        "unattributedShare": 0.1158
+      },
+      "webOnlyRoi": -0.4389
+    },
+    {
+      "id": "plc:ya-search",
+      "parentId": "src:yandex",
+      "level": "placement",
+      "name": "Поиск",
+      "first": {
+        "clicks": 21506,
+        "spend": 1356437,
+        "cpc": 63,
+        "orders": 800.4232,
+        "netOrders": 654.5834,
+        "revenue": 6334815,
+        "netRevenue": 5205472,
+        "margin": 1365370,
+        "profit": 8933,
+        "cpo": 1695,
+        "cpoNet": 2072,
+        "aov": 7914,
+        "roi": 0.0066,
+        "buyoutRate": 0.8217,
+        "repeatRate": 0.3136,
+        "repeatOrdersShare": 0.2893,
+        "breakEvenCpc": 63,
+        "ordersByChannel": {
+          "web": 400.17,
+          "app": 289.2025,
+          "offline": 111.0507
+        },
+        "netRevenueByChannel": {
+          "web": 2755838,
+          "app": 1757721,
+          "offline": 691913
+        },
+        "channelShare": {
+          "web": 0.4999,
+          "app": 0.3613,
+          "offline": 0.1387
+        },
+        "onlineOrders": 689.3725,
+        "onlineNetRevenue": 4513558,
+        "onlineShare": 0.8613,
+        "unattributedOrders": 142.7655,
+        "unattributedNetRevenue": 914606,
+        "unattributedShare": 0.1125
+      },
+      "all": {
+        "clicks": 21506,
+        "spend": 1356437,
+        "cpc": 63,
+        "orders": 1126.2619,
+        "netOrders": 938.9775,
+        "revenue": 8670408,
+        "netRevenue": 7221681,
+        "margin": 1945111,
+        "profit": 588674,
+        "cpo": 1204,
+        "cpoNet": 1445,
+        "aov": 7698,
+        "roi": 0.434,
+        "buyoutRate": 0.8329,
+        "repeatRate": 0.3136,
+        "repeatOrdersShare": 0.2893,
+        "breakEvenCpc": 90,
+        "ordersByChannel": {
+          "web": 508.7909,
+          "app": 444.656,
+          "offline": 172.8149
+        },
+        "netRevenueByChannel": {
+          "web": 3473426,
+          "app": 2689443,
+          "offline": 1058812
+        },
+        "channelShare": {
+          "web": 0.4518,
+          "app": 0.3948,
+          "offline": 0.1534
+        },
+        "onlineOrders": 953.4469,
+        "onlineNetRevenue": 6162868,
+        "onlineShare": 0.8466,
+        "unattributedOrders": 142.7655,
+        "unattributedNetRevenue": 914606,
+        "unattributedShare": 0.1125
+      },
+      "webOnlyRoi": -0.4671
+    },
+    {
+      "id": "cmp:ya-brand",
+      "parentId": "plc:ya-search",
+      "level": "campaign",
+      "name": "Бренд",
+      "fullName": "Поиск — Бренд",
+      "sourceName": "Яндекс Директ",
+      "placementName": "Поиск",
+      "category": "Микс — весь ассортимент",
+      "categoryId": "mix",
+      "marginRate": 0.2801,
+      "roiBeforeReturns": 1.5819,
+      "trafficKind": "brand",
+      "first": {
+        "clicks": 4461,
+        "spend": 173449,
+        "cpc": 39,
+        "orders": 220.537,
+        "netOrders": 186.2511,
+        "revenue": 1598926,
+        "netRevenue": 1331479,
+        "margin": 372916,
+        "profit": 199467,
+        "cpo": 786,
+        "cpoNet": 931,
+        "aov": 7250,
+        "roi": 1.15,
+        "buyoutRate": 0.8327,
+        "repeatRate": 0.4168,
+        "repeatOrdersShare": 0.358,
+        "breakEvenCpc": 84,
+        "ordersByChannel": {
+          "web": 88.6465,
+          "app": 105.6983,
+          "offline": 26.1922
+        },
+        "netRevenueByChannel": {
+          "web": 518247,
+          "app": 651511,
+          "offline": 161721
+        },
+        "channelShare": {
+          "web": 0.402,
+          "app": 0.4793,
+          "offline": 0.1188
+        },
+        "onlineOrders": 194.3448,
+        "onlineNetRevenue": 1169758,
+        "onlineShare": 0.8812,
+        "unattributedOrders": 32.983,
+        "unattributedNetRevenue": 197145,
+        "unattributedShare": 0.0876
+      },
+      "all": {
+        "clicks": 4461,
+        "spend": 173449,
+        "cpc": 39,
+        "orders": 343.5018,
+        "netOrders": 293.9416,
+        "revenue": 2488666,
+        "netRevenue": 2098737,
+        "margin": 591607,
+        "profit": 418158,
+        "cpo": 505,
+        "cpoNet": 590,
+        "aov": 7245,
+        "roi": 2.4108,
+        "buyoutRate": 0.8433,
+        "repeatRate": 0.4168,
+        "repeatOrdersShare": 0.358,
+        "breakEvenCpc": 133,
+        "ordersByChannel": {
+          "web": 121.5399,
+          "app": 175.0666,
+          "offline": 46.8953
+        },
+        "netRevenueByChannel": {
+          "web": 712989,
+          "app": 1092776,
+          "offline": 292972
+        },
+        "channelShare": {
+          "web": 0.3538,
+          "app": 0.5097,
+          "offline": 0.1365
+        },
+        "onlineOrders": 296.6065,
+        "onlineNetRevenue": 1805765,
+        "onlineShare": 0.8635,
+        "unattributedOrders": 32.983,
+        "unattributedNetRevenue": 197145,
+        "unattributedShare": 0.0876
+      },
+      "webOnlyRoi": -0.1632,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 372916,
+          "roi": 1.15
+        },
+        {
+          "orderIndex": 2,
+          "margin": 535225,
+          "roi": 2.0858
+        },
+        {
+          "orderIndex": 3,
+          "margin": 591607,
+          "roi": 2.4108
+        }
+      ],
+      "repeatRateGapToBreakEven": 0
+    },
+    {
+      "id": "cmp:ya-jackets",
+      "parentId": "plc:ya-search",
+      "level": "campaign",
+      "name": "Куртки",
+      "fullName": "Поиск — Куртки",
+      "sourceName": "Яндекс Директ",
+      "placementName": "Поиск",
+      "category": "Куртки и верхняя одежда",
+      "categoryId": "jackets",
+      "marginRate": 0.2403,
+      "roiBeforeReturns": 0.0486,
+      "trafficKind": "warm",
+      "first": {
+        "clicks": 7118,
+        "spend": 678581,
+        "cpc": 95,
+        "orders": 258.2772,
+        "netOrders": 215.2646,
+        "revenue": 2960514,
+        "netRevenue": 2512845,
+        "margin": 603937,
+        "profit": -74644,
+        "cpo": 2627,
+        "cpoNet": 3152,
+        "aov": 11463,
+        "roi": -0.11,
+        "buyoutRate": 0.8488,
+        "repeatRate": 0.1788,
+        "repeatOrdersShare": 0.1728,
+        "breakEvenCpc": 85,
+        "ordersByChannel": {
+          "web": 141.3113,
+          "app": 78.6455,
+          "offline": 38.3204
+        },
+        "netRevenueByChannel": {
+          "web": 1387057,
+          "app": 769134,
+          "offline": 356654
+        },
+        "channelShare": {
+          "web": 0.5471,
+          "app": 0.3045,
+          "offline": 0.1484
+        },
+        "onlineOrders": 219.9568,
+        "onlineNetRevenue": 2156191,
+        "onlineShare": 0.8516,
+        "unattributedOrders": 43.6426,
+        "unattributedNetRevenue": 420338,
+        "unattributedShare": 0.1226
+      },
+      "all": {
+        "clicks": 7118,
+        "spend": 678581,
+        "cpc": 95,
+        "orders": 312.2422,
+        "netOrders": 262.4601,
+        "revenue": 3745495,
+        "netRevenue": 3209572,
+        "margin": 786688,
+        "profit": 108107,
+        "cpo": 2173,
+        "cpoNet": 2585,
+        "aov": 11995,
+        "roi": 0.1593,
+        "buyoutRate": 0.8569,
+        "repeatRate": 0.1788,
+        "repeatOrdersShare": 0.1728,
+        "breakEvenCpc": 111,
+        "ordersByChannel": {
+          "web": 164.3791,
+          "app": 99.3745,
+          "offline": 48.4887
+        },
+        "netRevenueByChannel": {
+          "web": 1684931,
+          "app": 1039603,
+          "offline": 485038
+        },
+        "channelShare": {
+          "web": 0.5264,
+          "app": 0.3183,
+          "offline": 0.1553
+        },
+        "onlineOrders": 263.7536,
+        "onlineNetRevenue": 2724534,
+        "onlineShare": 0.8447,
+        "unattributedOrders": 43.6426,
+        "unattributedNetRevenue": 420338,
+        "unattributedShare": 0.1226
+      },
+      "webOnlyRoi": -0.5087,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 603937,
+          "roi": -0.11
+        },
+        {
+          "orderIndex": 2,
+          "margin": 754913,
+          "roi": 0.1125
+        },
+        {
+          "orderIndex": 3,
+          "margin": 786688,
+          "roi": 0.1593
+        }
+      ],
+      "repeatRateGapToBreakEven": -0.0705
+    },
+    {
+      "id": "cmp:ya-pants",
+      "parentId": "plc:ya-search",
+      "level": "campaign",
+      "name": "Штаны и брюки",
+      "fullName": "Поиск — Штаны и брюки",
+      "sourceName": "Яндекс Директ",
+      "placementName": "Поиск",
+      "category": "Штаны и брюки",
+      "categoryId": "pants",
+      "marginRate": 0.31,
+      "roiBeforeReturns": 0.1248,
+      "trafficKind": "warm",
+      "first": {
+        "clicks": 5840,
+        "spend": 254385,
+        "cpc": 44,
+        "orders": 178.2742,
+        "netOrders": 120.0011,
+        "revenue": 922997,
+        "netRevenue": 623654,
+        "margin": 193333,
+        "profit": -61052,
+        "cpo": 1427,
+        "cpoNet": 2120,
+        "aov": 5177,
+        "roi": -0.24,
+        "buyoutRate": 0.6757,
+        "repeatRate": 0.2488,
+        "repeatOrdersShare": 0.2304,
+        "breakEvenCpc": 33,
+        "ordersByChannel": {
+          "web": 107.0387,
+          "app": 49.6702,
+          "offline": 21.5653
+        },
+        "netRevenueByChannel": {
+          "web": 370019,
+          "app": 176398,
+          "offline": 77237
+        },
+        "channelShare": {
+          "web": 0.6004,
+          "app": 0.2786,
+          "offline": 0.121
+        },
+        "onlineOrders": 156.7089,
+        "onlineNetRevenue": 546416,
+        "onlineShare": 0.879,
+        "unattributedOrders": 35.7511,
+        "unattributedNetRevenue": 125193,
+        "unattributedShare": 0.1337
+      },
+      "all": {
+        "clicks": 5840,
+        "spend": 254385,
+        "cpc": 44,
+        "orders": 231.6497,
+        "netOrders": 157.9339,
+        "revenue": 1211891,
+        "netRevenue": 829279,
+        "margin": 257076,
+        "profit": 2691,
+        "cpo": 1098,
+        "cpoNet": 1611,
+        "aov": 5232,
+        "roi": 0.0106,
+        "buyoutRate": 0.6843,
+        "repeatRate": 0.2488,
+        "repeatOrdersShare": 0.2304,
+        "breakEvenCpc": 44,
+        "ordersByChannel": {
+          "web": 132.1908,
+          "app": 68.7384,
+          "offline": 30.7204
+        },
+        "netRevenueByChannel": {
+          "web": 465394,
+          "app": 250784,
+          "offline": 113101
+        },
+        "channelShare": {
+          "web": 0.5706,
+          "app": 0.2967,
+          "offline": 0.1326
+        },
+        "onlineOrders": 200.9293,
+        "onlineNetRevenue": 716178,
+        "onlineShare": 0.8674,
+        "unattributedOrders": 35.7511,
+        "unattributedNetRevenue": 125193,
+        "unattributedShare": 0.1337
+      },
+      "webOnlyRoi": -0.5491,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 193333,
+          "roi": -0.24
+        },
+        {
+          "orderIndex": 2,
+          "margin": 245706,
+          "roi": -0.0341
+        },
+        {
+          "orderIndex": 3,
+          "margin": 257076,
+          "roi": 0.0106
+        }
+      ],
+      "repeatRateGapToBreakEven": 0.0017
+    },
+    {
+      "id": "cmp:ya-accessories",
+      "parentId": "plc:ya-search",
+      "level": "campaign",
+      "name": "Носки и ремни",
+      "fullName": "Поиск — Носки и ремни",
+      "sourceName": "Яндекс Директ",
+      "placementName": "Поиск",
+      "category": "Аксессуары: носки, ремни",
+      "categoryId": "accessories",
+      "marginRate": 0.3726,
+      "roiBeforeReturns": 0.3968,
+      "trafficKind": "warm",
+      "first": {
+        "clicks": 3979,
+        "spend": 108887,
+        "cpc": 27,
+        "orders": 138.5137,
+        "netOrders": 129.1845,
+        "revenue": 408255,
+        "netRevenue": 379954,
+        "margin": 141553,
+        "profit": 32666,
+        "cpo": 786,
+        "cpoNet": 843,
+        "aov": 2947,
+        "roi": 0.3,
+        "buyoutRate": 0.9307,
+        "repeatRate": 0.4898,
+        "repeatOrdersShare": 0.4061,
+        "breakEvenCpc": 36,
+        "ordersByChannel": {
+          "web": 58.8727,
+          "app": 55.0849,
+          "offline": 24.556
+        },
+        "netRevenueByChannel": {
+          "web": 161485,
+          "app": 153008,
+          "offline": 65461
+        },
+        "channelShare": {
+          "web": 0.425,
+          "app": 0.3977,
+          "offline": 0.1773
+        },
+        "onlineOrders": 113.9577,
+        "onlineNetRevenue": 314493,
+        "onlineShare": 0.8227,
+        "unattributedOrders": 29.1811,
+        "unattributedNetRevenue": 78878,
+        "unattributedShare": 0.1112
+      },
+      "all": {
+        "clicks": 3979,
+        "spend": 108887,
+        "cpc": 27,
+        "orders": 233.2447,
+        "netOrders": 220.0925,
+        "revenue": 702235,
+        "netRevenue": 661679,
+        "margin": 246377,
+        "profit": 137490,
+        "cpo": 467,
+        "cpoNet": 495,
+        "aov": 3011,
+        "roi": 1.2627,
+        "buyoutRate": 0.9422,
+        "repeatRate": 0.4898,
+        "repeatOrdersShare": 0.4061,
+        "breakEvenCpc": 62,
+        "ordersByChannel": {
+          "web": 85.7621,
+          "app": 101.2937,
+          "offline": 46.1889
+        },
+        "netRevenueByChannel": {
+          "web": 241134,
+          "app": 292166,
+          "offline": 128379
+        },
+        "channelShare": {
+          "web": 0.3677,
+          "app": 0.4343,
+          "offline": 0.198
+        },
+        "onlineOrders": 187.0558,
+        "onlineNetRevenue": 533300,
+        "onlineShare": 0.802,
+        "unattributedOrders": 29.1811,
+        "unattributedNetRevenue": 78878,
+        "unattributedShare": 0.1112
+      },
+      "webOnlyRoi": -0.4475,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 141553,
+          "roi": 0.3
+        },
+        {
+          "orderIndex": 2,
+          "margin": 215592,
+          "roi": 0.98
+        },
+        {
+          "orderIndex": 3,
+          "margin": 246377,
+          "roi": 1.2627
+        }
+      ],
+      "repeatRateGapToBreakEven": 0
+    },
+    {
+      "id": "cmp:ya-workwear",
+      "parentId": "plc:ya-search",
+      "level": "campaign",
+      "name": "Спецодежда оптом",
+      "fullName": "Поиск — Спецодежда оптом",
+      "sourceName": "Яндекс Директ",
+      "placementName": "Поиск",
+      "category": "Спецодежда оптом",
+      "categoryId": "workwear",
+      "marginRate": 0.15,
+      "roiBeforeReturns": -0.528,
+      "trafficKind": "cold",
+      "first": {
+        "clicks": 108,
+        "spend": 141135,
+        "cpc": 1307,
+        "orders": 4.8211,
+        "netOrders": 3.8821,
+        "revenue": 444122,
+        "netRevenue": 357541,
+        "margin": 53631,
+        "profit": -87503,
+        "cpo": 29274,
+        "cpoNet": 36355,
+        "aov": 92120,
+        "roi": -0.62,
+        "buyoutRate": 0.8051,
+        "repeatRate": 0.1487,
+        "repeatOrdersShare": 0.1427,
+        "breakEvenCpc": 497,
+        "ordersByChannel": {
+          "web": 4.3008,
+          "app": 0.1035,
+          "offline": 0.4168
+        },
+        "netRevenueByChannel": {
+          "web": 319031,
+          "app": 7670,
+          "offline": 30841
+        },
+        "channelShare": {
+          "web": 0.8921,
+          "app": 0.0215,
+          "offline": 0.0865
+        },
+        "onlineOrders": 4.4043,
+        "onlineNetRevenue": 326700,
+        "onlineShare": 0.9135,
+        "unattributedOrders": 1.2076,
+        "unattributedNetRevenue": 93053,
+        "unattributedShare": 0.1768
+      },
+      "all": {
+        "clicks": 108,
+        "spend": 141135,
+        "cpc": 1307,
+        "orders": 5.6234,
+        "netOrders": 4.5495,
+        "revenue": 522122,
+        "netRevenue": 422413,
+        "margin": 63362,
+        "profit": -77773,
+        "cpo": 25098,
+        "cpoNet": 31022,
+        "aov": 92848,
+        "roi": -0.5511,
+        "buyoutRate": 0.809,
+        "repeatRate": 0.1487,
+        "repeatOrdersShare": 0.1427,
+        "breakEvenCpc": 587,
+        "ordersByChannel": {
+          "web": 4.9189,
+          "app": 0.1829,
+          "offline": 0.5216
+        },
+        "netRevenueByChannel": {
+          "web": 368978,
+          "app": 14113,
+          "offline": 39322
+        },
+        "channelShare": {
+          "web": 0.8747,
+          "app": 0.0325,
+          "offline": 0.0928
+        },
+        "onlineOrders": 5.1018,
+        "onlineNetRevenue": 383092,
+        "onlineShare": 0.9072,
+        "unattributedOrders": 1.2076,
+        "unattributedNetRevenue": 93053,
+        "unattributedShare": 0.1768
+      },
+      "webOnlyRoi": -0.6609,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 53631,
+          "roi": -0.62
+        },
+        {
+          "orderIndex": 2,
+          "margin": 62266,
+          "roi": -0.5588
+        },
+        {
+          "orderIndex": 3,
+          "margin": 63362,
+          "roi": -0.5511
+        }
+      ],
+      "repeatRateGapToBreakEven": 0.7537
+    },
+    {
+      "id": "plc:ya-network",
+      "parentId": "src:yandex",
+      "level": "placement",
+      "name": "РСЯ",
+      "first": {
+        "clicks": 17320,
+        "spend": 482000,
+        "cpc": 28,
+        "orders": 312.6978,
+        "netOrders": 258.2379,
+        "revenue": 2397856,
+        "netRevenue": 1956552,
+        "margin": 512436,
+        "profit": 30436,
+        "cpo": 1541,
+        "cpoNet": 1866,
+        "aov": 7668,
+        "roi": 0.0631,
+        "buyoutRate": 0.816,
+        "repeatRate": 0.1927,
+        "repeatOrdersShare": 0.1857,
+        "breakEvenCpc": 30,
+        "ordersByChannel": {
+          "web": 184.1214,
+          "app": 69.9875,
+          "offline": 58.5889
+        },
+        "netRevenueByChannel": {
+          "web": 1178566,
+          "app": 437165,
+          "offline": 340821
+        },
+        "channelShare": {
+          "web": 0.5888,
+          "app": 0.2238,
+          "offline": 0.1874
+        },
+        "onlineOrders": 254.1089,
+        "onlineNetRevenue": 1615731,
+        "onlineShare": 0.8126,
+        "unattributedOrders": 54.9722,
+        "unattributedNetRevenue": 363606,
+        "unattributedShare": 0.1252
+      },
+      "all": {
+        "clicks": 17320,
+        "spend": 482000,
+        "cpc": 28,
+        "orders": 383.9977,
+        "netOrders": 319.4956,
+        "revenue": 2903227,
+        "netRevenue": 2380656,
+        "margin": 630670,
+        "profit": 148670,
+        "cpo": 1255,
+        "cpoNet": 1509,
+        "aov": 7561,
+        "roi": 0.3084,
+        "buyoutRate": 0.82,
+        "repeatRate": 0.1927,
+        "repeatOrdersShare": 0.1857,
+        "breakEvenCpc": 36,
+        "ordersByChannel": {
+          "web": 214.5793,
+          "app": 93.5318,
+          "offline": 75.8866
+        },
+        "netRevenueByChannel": {
+          "web": 1362389,
+          "app": 580408,
+          "offline": 437859
+        },
+        "channelShare": {
+          "web": 0.5588,
+          "app": 0.2436,
+          "offline": 0.1976
+        },
+        "onlineOrders": 308.1111,
+        "onlineNetRevenue": 1942796,
+        "onlineShare": 0.8024,
+        "unattributedOrders": 54.9722,
+        "unattributedNetRevenue": 363606,
+        "unattributedShare": 0.1252
+      },
+      "webOnlyRoi": -0.3596
+    },
+    {
+      "id": "cmp:ya-retargeting",
+      "parentId": "plc:ya-network",
+      "level": "campaign",
+      "name": "Ретаргетинг брошенных корзин",
+      "fullName": "РСЯ — Ретаргетинг брошенных корзин",
+      "sourceName": "Яндекс Директ",
+      "placementName": "РСЯ",
+      "category": "Микс — весь ассортимент",
+      "categoryId": "mix",
+      "marginRate": 0.29,
+      "roiBeforeReturns": 1.1186,
+      "trafficKind": "retargeting",
+      "first": {
+        "clicks": 2189,
+        "spend": 54747,
+        "cpc": 25,
+        "orders": 52.6422,
+        "netOrders": 43.2089,
+        "revenue": 399959,
+        "netRevenue": 328482,
+        "margin": 95260,
+        "profit": 40513,
+        "cpo": 1040,
+        "cpoNet": 1267,
+        "aov": 7598,
+        "roi": 0.74,
+        "buyoutRate": 0.8213,
+        "repeatRate": 0.2907,
+        "repeatOrdersShare": 0.264,
+        "breakEvenCpc": 44,
+        "ordersByChannel": {
+          "web": 27.9617,
+          "app": 18.9551,
+          "offline": 5.7253
+        },
+        "netRevenueByChannel": {
+          "web": 173788,
+          "app": 118863,
+          "offline": 35830
+        },
+        "channelShare": {
+          "web": 0.5312,
+          "app": 0.3601,
+          "offline": 0.1088
+        },
+        "onlineOrders": 46.9168,
+        "onlineNetRevenue": 292652,
+        "onlineShare": 0.8912,
+        "unattributedOrders": 8.6479,
+        "unattributedNetRevenue": 56535,
+        "unattributedShare": 0.1079
+      },
+      "all": {
+        "clicks": 2189,
+        "spend": 54747,
+        "cpc": 25,
+        "orders": 71.5262,
+        "netOrders": 59.2287,
+        "revenue": 552319,
+        "netRevenue": 457817,
+        "margin": 132767,
+        "profit": 78020,
+        "cpo": 765,
+        "cpoNet": 924,
+        "aov": 7722,
+        "roi": 1.4251,
+        "buyoutRate": 0.8289,
+        "repeatRate": 0.2907,
+        "repeatOrdersShare": 0.264,
+        "breakEvenCpc": 61,
+        "ordersByChannel": {
+          "web": 35.4963,
+          "app": 27.3563,
+          "offline": 8.6736
+        },
+        "netRevenueByChannel": {
+          "web": 224985,
+          "app": 176715,
+          "offline": 56117
+        },
+        "channelShare": {
+          "web": 0.4963,
+          "app": 0.3825,
+          "offline": 0.1213
+        },
+        "onlineOrders": 62.8526,
+        "onlineNetRevenue": 401700,
+        "onlineShare": 0.8787,
+        "unattributedOrders": 8.6479,
+        "unattributedNetRevenue": 56535,
+        "unattributedShare": 0.1079
+      },
+      "webOnlyRoi": -0.0794,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 95260,
+          "roi": 0.74
+        },
+        {
+          "orderIndex": 2,
+          "margin": 125265,
+          "roi": 1.2881
+        },
+        {
+          "orderIndex": 3,
+          "margin": 132767,
+          "roi": 1.4251
+        }
+      ],
+      "repeatRateGapToBreakEven": 0
+    },
+    {
+      "id": "cmp:ya-broad",
+      "parentId": "plc:ya-network",
+      "level": "campaign",
+      "name": "Широкий охват",
+      "fullName": "РСЯ — Широкий охват",
+      "sourceName": "Яндекс Директ",
+      "placementName": "РСЯ",
+      "category": "Куртки и верхняя одежда",
+      "categoryId": "jackets",
+      "marginRate": 0.224,
+      "roiBeforeReturns": -0.3731,
+      "trafficKind": "cold",
+      "first": {
+        "clicks": 10401,
+        "spend": 205278,
+        "cpc": 20,
+        "orders": 60.3678,
+        "netOrders": 51.9813,
+        "revenue": 574524,
+        "netRevenue": 494867,
+        "margin": 110850,
+        "profit": -94428,
+        "cpo": 3400,
+        "cpoNet": 3949,
+        "aov": 9517,
+        "roi": -0.46,
+        "buyoutRate": 0.8614,
+        "repeatRate": 0.0591,
+        "repeatOrdersShare": 0.0583,
+        "breakEvenCpc": 11,
+        "ordersByChannel": {
+          "web": 46.718,
+          "app": 8.1334,
+          "offline": 5.5165
+        },
+        "netRevenueByChannel": {
+          "web": 382632,
+          "app": 67454,
+          "offline": 44781
+        },
+        "channelShare": {
+          "web": 0.7739,
+          "app": 0.1347,
+          "offline": 0.0914
+        },
+        "onlineOrders": 54.8513,
+        "onlineNetRevenue": 450087,
+        "onlineShare": 0.9086,
+        "unattributedOrders": 13.275,
+        "unattributedNetRevenue": 110720,
+        "unattributedShare": 0.1716
+      },
+      "all": {
+        "clicks": 10401,
+        "spend": 205278,
+        "cpc": 20,
+        "orders": 64.1058,
+        "netOrders": 55.2989,
+        "revenue": 612528,
+        "netRevenue": 528605,
+        "margin": 118485,
+        "profit": -86792,
+        "cpo": 3202,
+        "cpoNet": 3712,
+        "aov": 9555,
+        "roi": -0.4228,
+        "buyoutRate": 0.863,
+        "repeatRate": 0.0591,
+        "repeatOrdersShare": 0.0583,
+        "breakEvenCpc": 11,
+        "ordersByChannel": {
+          "web": 49.1766,
+          "app": 8.9161,
+          "offline": 6.0132
+        },
+        "netRevenueByChannel": {
+          "web": 404789,
+          "app": 74576,
+          "offline": 49240
+        },
+        "channelShare": {
+          "web": 0.7671,
+          "app": 0.1391,
+          "offline": 0.0938
+        },
+        "onlineOrders": 58.0927,
+        "onlineNetRevenue": 479365,
+        "onlineShare": 0.9062,
+        "unattributedOrders": 13.275,
+        "unattributedNetRevenue": 110720,
+        "unattributedShare": 0.1716
+      },
+      "webOnlyRoi": -0.5825,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 110850,
+          "roi": -0.46
+        },
+        {
+          "orderIndex": 2,
+          "margin": 118107,
+          "roi": -0.4246
+        },
+        {
+          "orderIndex": 3,
+          "margin": 118485,
+          "roi": -0.4228
+        }
+      ],
+      "repeatRateGapToBreakEven": 0.5011
+    },
+    {
+      "id": "cmp:ya-feed",
+      "parentId": "plc:ya-network",
+      "level": "campaign",
+      "name": "Товарная кампания по фиду",
+      "fullName": "РСЯ — Товарная кампания по фиду",
+      "sourceName": "Яндекс Директ",
+      "placementName": "РСЯ",
+      "category": "Микс — весь ассортимент",
+      "categoryId": "mix",
+      "marginRate": 0.2703,
+      "roiBeforeReturns": 0.7334,
+      "trafficKind": "warm",
+      "first": {
+        "clicks": 4730,
+        "spend": 221975,
+        "cpc": 47,
+        "orders": 199.6878,
+        "netOrders": 163.0476,
+        "revenue": 1423373,
+        "netRevenue": 1133203,
+        "margin": 306326,
+        "profit": 84351,
+        "cpo": 1112,
+        "cpoNet": 1361,
+        "aov": 7128,
+        "roi": 0.38,
+        "buyoutRate": 0.7961,
+        "repeatRate": 0.2072,
+        "repeatOrdersShare": 0.196,
+        "breakEvenCpc": 65,
+        "ordersByChannel": {
+          "web": 109.4417,
+          "app": 42.899,
+          "offline": 47.3471
+        },
+        "netRevenueByChannel": {
+          "web": 622145,
+          "app": 250848,
+          "offline": 260210
+        },
+        "channelShare": {
+          "web": 0.5481,
+          "app": 0.2148,
+          "offline": 0.2371
+        },
+        "onlineOrders": 152.3407,
+        "onlineNetRevenue": 872992,
+        "onlineShare": 0.7629,
+        "unattributedOrders": 33.0494,
+        "unattributedNetRevenue": 196350,
+        "unattributedShare": 0.1174
+      },
+      "all": {
+        "clicks": 4730,
+        "spend": 221975,
+        "cpc": 47,
+        "orders": 248.3657,
+        "netOrders": 204.968,
+        "revenue": 1738381,
+        "netRevenue": 1394234,
+        "margin": 379418,
+        "profit": 157443,
+        "cpo": 894,
+        "cpoNet": 1083,
+        "aov": 6999,
+        "roi": 0.7093,
+        "buyoutRate": 0.802,
+        "repeatRate": 0.2072,
+        "repeatOrdersShare": 0.196,
+        "breakEvenCpc": 80,
+        "ordersByChannel": {
+          "web": 129.9064,
+          "app": 57.2595,
+          "offline": 61.1998
+        },
+        "netRevenueByChannel": {
+          "web": 732615,
+          "app": 329117,
+          "offline": 332502
+        },
+        "channelShare": {
+          "web": 0.523,
+          "app": 0.2305,
+          "offline": 0.2464
+        },
+        "onlineOrders": 187.1659,
+        "onlineNetRevenue": 1061731,
+        "onlineShare": 0.7536,
+        "unattributedOrders": 33.0494,
+        "unattributedNetRevenue": 196350,
+        "unattributedShare": 0.1174
+      },
+      "webOnlyRoi": -0.2424,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 306326,
+          "roi": 0.38
+        },
+        {
+          "orderIndex": 2,
+          "margin": 368898,
+          "roi": 0.6619
+        },
+        {
+          "orderIndex": 3,
+          "margin": 379418,
+          "roi": 0.7093
+        }
+      ],
+      "repeatRateGapToBreakEven": 0
+    },
+    {
+      "id": "src:vk",
+      "parentId": null,
+      "level": "source",
+      "name": "VK Ads",
+      "first": {
+        "clicks": 25189,
+        "spend": 538026,
+        "cpc": 21,
+        "orders": 308.615,
+        "netOrders": 272.6018,
+        "revenue": 1879431,
+        "netRevenue": 1617900,
+        "margin": 450907,
+        "profit": -87119,
+        "cpo": 1743,
+        "cpoNet": 1974,
+        "aov": 6090,
+        "roi": -0.1619,
+        "buyoutRate": 0.8608,
+        "repeatRate": 0.2606,
+        "repeatOrdersShare": 0.2433,
+        "breakEvenCpc": 18,
+        "ordersByChannel": {
+          "web": 132.1997,
+          "app": 142.0924,
+          "offline": 34.3229
+        },
+        "netRevenueByChannel": {
+          "web": 831291,
+          "app": 616949,
+          "offline": 169660
+        },
+        "channelShare": {
+          "web": 0.4284,
+          "app": 0.4604,
+          "offline": 0.1112
+        },
+        "onlineOrders": 274.2921,
+        "onlineNetRevenue": 1448240,
+        "onlineShare": 0.8888,
+        "unattributedOrders": 73.0599,
+        "unattributedNetRevenue": 422063,
+        "unattributedShare": 0.1519
+      },
+      "all": {
+        "clicks": 25189,
+        "spend": 538026,
+        "cpc": 21,
+        "orders": 407.8391,
+        "netOrders": 363.4167,
+        "revenue": 2420574,
+        "netRevenue": 2098206,
+        "margin": 595114,
+        "profit": 57087,
+        "cpo": 1319,
+        "cpoNet": 1480,
+        "aov": 5935,
+        "roi": 0.1061,
+        "buyoutRate": 0.8668,
+        "repeatRate": 0.2606,
+        "repeatOrdersShare": 0.2433,
+        "breakEvenCpc": 24,
+        "ordersByChannel": {
+          "web": 156.3607,
+          "app": 201.3088,
+          "offline": 50.1696
+        },
+        "netRevenueByChannel": {
+          "web": 980940,
+          "app": 873534,
+          "offline": 243732
+        },
+        "channelShare": {
+          "web": 0.3834,
+          "app": 0.4936,
+          "offline": 0.123
+        },
+        "onlineOrders": 357.6695,
+        "onlineNetRevenue": 1854474,
+        "onlineShare": 0.877,
+        "unattributedOrders": 73.0599,
+        "unattributedNetRevenue": 422063,
+        "unattributedShare": 0.1519
+      },
+      "webOnlyRoi": -0.5694
+    },
+    {
+      "id": "cmp:vk-lal",
+      "parentId": "src:vk",
+      "level": "campaign",
+      "name": "Look-alike по покупателям",
+      "fullName": "Look-alike по покупателям",
+      "sourceName": "VK Ads",
+      "placementName": null,
+      "category": "Микс — весь ассортимент",
+      "categoryId": "mix",
+      "marginRate": 0.29,
+      "roiBeforeReturns": 0.0513,
+      "trafficKind": "cold",
+      "first": {
+        "clicks": 8249,
+        "spend": 250154,
+        "cpc": 30,
+        "orders": 116.0565,
+        "netOrders": 97.2478,
+        "revenue": 906811,
+        "netRevenue": 759088,
+        "margin": 220136,
+        "profit": -30018,
+        "cpo": 2155,
+        "cpoNet": 2572,
+        "aov": 7814,
+        "roi": -0.12,
+        "buyoutRate": 0.8371,
+        "repeatRate": 0.2899,
+        "repeatOrdersShare": 0.2636,
+        "breakEvenCpc": 27,
+        "ordersByChannel": {
+          "web": 51.8309,
+          "app": 52.2111,
+          "offline": 12.0145
+        },
+        "netRevenueByChannel": {
+          "web": 337715,
+          "app": 342711,
+          "offline": 78662
+        },
+        "channelShare": {
+          "web": 0.4466,
+          "app": 0.4499,
+          "offline": 0.1035
+        },
+        "onlineOrders": 104.042,
+        "onlineNetRevenue": 680426,
+        "onlineShare": 0.8965,
+        "unattributedOrders": 35.8773,
+        "unattributedNetRevenue": 233424,
+        "unattributedShare": 0.1854
+      },
+      "all": {
+        "clicks": 8249,
+        "spend": 250154,
+        "cpc": 30,
+        "orders": 157.5998,
+        "netOrders": 133.1699,
+        "revenue": 1256104,
+        "netRevenue": 1060863,
+        "margin": 307650,
+        "profit": 57496,
+        "cpo": 1587,
+        "cpoNet": 1878,
+        "aov": 7970,
+        "roi": 0.2298,
+        "buyoutRate": 0.8446,
+        "repeatRate": 0.2899,
+        "repeatOrdersShare": 0.2636,
+        "breakEvenCpc": 37,
+        "ordersByChannel": {
+          "web": 64.8733,
+          "app": 74.4177,
+          "offline": 18.3087
+        },
+        "netRevenueByChannel": {
+          "web": 431387,
+          "app": 504935,
+          "offline": 124541
+        },
+        "channelShare": {
+          "web": 0.4116,
+          "app": 0.4722,
+          "offline": 0.1162
+        },
+        "onlineOrders": 139.291,
+        "onlineNetRevenue": 936322,
+        "onlineShare": 0.8838,
+        "unattributedOrders": 35.8773,
+        "unattributedNetRevenue": 233424,
+        "unattributedShare": 0.1854
+      },
+      "webOnlyRoi": -0.6085,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 220136,
+          "roi": -0.12
+        },
+        {
+          "orderIndex": 2,
+          "margin": 289961,
+          "roi": 0.1591
+        },
+        {
+          "orderIndex": 3,
+          "margin": 307650,
+          "roi": 0.2298
+        }
+      ],
+      "repeatRateGapToBreakEven": -0.1713
+    },
+    {
+      "id": "cmp:vk-interests",
+      "parentId": "src:vk",
+      "level": "campaign",
+      "name": "Интересы — широкий охват",
+      "fullName": "Интересы — широкий охват",
+      "sourceName": "VK Ads",
+      "placementName": null,
+      "category": "Куртки и верхняя одежда",
+      "categoryId": "jackets",
+      "marginRate": 0.2249,
+      "roiBeforeReturns": -0.2938,
+      "trafficKind": "cold",
+      "first": {
+        "clicks": 13600,
+        "spend": 227246,
+        "cpc": 17,
+        "orders": 68.0124,
+        "netOrders": 58.7136,
+        "revenue": 713491,
+        "netRevenue": 616307,
+        "margin": 138620,
+        "profit": -88626,
+        "cpo": 3341,
+        "cpoNet": 3870,
+        "aov": 10491,
+        "roi": -0.39,
+        "buyoutRate": 0.8638,
+        "repeatRate": 0.0995,
+        "repeatOrdersShare": 0.097,
+        "breakEvenCpc": 10,
+        "ordersByChannel": {
+          "web": 47.7488,
+          "app": 13.4494,
+          "offline": 6.8141
+        },
+        "netRevenueByChannel": {
+          "web": 430180,
+          "app": 125199,
+          "offline": 60928
+        },
+        "channelShare": {
+          "web": 0.7021,
+          "app": 0.1977,
+          "offline": 0.1002
+        },
+        "onlineOrders": 61.1983,
+        "onlineNetRevenue": 555379,
+        "onlineShare": 0.8998,
+        "unattributedOrders": 15.5182,
+        "unattributedNetRevenue": 143086,
+        "unattributedShare": 0.1708
+      },
+      "all": {
+        "clicks": 13600,
+        "spend": 227246,
+        "cpc": 17,
+        "orders": 75.3191,
+        "netOrders": 65.2107,
+        "revenue": 794217,
+        "netRevenue": 688133,
+        "margin": 154764,
+        "profit": -72482,
+        "cpo": 3017,
+        "cpoNet": 3485,
+        "aov": 10545,
+        "roi": -0.319,
+        "buyoutRate": 0.8664,
+        "repeatRate": 0.0995,
+        "repeatOrdersShare": 0.097,
+        "breakEvenCpc": 11,
+        "ordersByChannel": {
+          "web": 52.0116,
+          "app": 15.4471,
+          "offline": 7.8604
+        },
+        "netRevenueByChannel": {
+          "web": 471750,
+          "app": 145254,
+          "offline": 71130
+        },
+        "channelShare": {
+          "web": 0.6905,
+          "app": 0.2051,
+          "offline": 0.1044
+        },
+        "onlineOrders": 67.4587,
+        "onlineNetRevenue": 617004,
+        "onlineShare": 0.8956,
+        "unattributedOrders": 15.5182,
+        "unattributedNetRevenue": 143086,
+        "unattributedShare": 0.1708
+      },
+      "webOnlyRoi": -0.5742,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 138620,
+          "roi": -0.39
+        },
+        {
+          "orderIndex": 2,
+          "margin": 153502,
+          "roi": -0.3245
+        },
+        {
+          "orderIndex": 3,
+          "margin": 154764,
+          "roi": -0.319
+        }
+      ],
+      "repeatRateGapToBreakEven": 0.3487
+    },
+    {
+      "id": "cmp:vk-retarget",
+      "parentId": "src:vk",
+      "level": "campaign",
+      "name": "Ретаргет по каталогу",
+      "fullName": "Ретаргет по каталогу",
+      "sourceName": "VK Ads",
+      "placementName": null,
+      "category": "Аксессуары: носки, ремни",
+      "categoryId": "accessories",
+      "marginRate": 0.38,
+      "roiBeforeReturns": 0.6242,
+      "trafficKind": "retargeting",
+      "first": {
+        "clicks": 3340,
+        "spend": 60626,
+        "cpc": 18,
+        "orders": 124.5461,
+        "netOrders": 116.6404,
+        "revenue": 259128,
+        "netRevenue": 242505,
+        "margin": 92152,
+        "profit": 31526,
+        "cpo": 487,
+        "cpoNet": 520,
+        "aov": 2081,
+        "roi": 0.52,
+        "buyoutRate": 0.9358,
+        "repeatRate": 0.3212,
+        "repeatOrdersShare": 0.288,
+        "breakEvenCpc": 28,
+        "ordersByChannel": {
+          "web": 32.62,
+          "app": 76.4318,
+          "offline": 15.4942
+        },
+        "netRevenueByChannel": {
+          "web": 63396,
+          "app": 149039,
+          "offline": 30070
+        },
+        "channelShare": {
+          "web": 0.2619,
+          "app": 0.6137,
+          "offline": 0.1244
+        },
+        "onlineOrders": 109.0518,
+        "onlineNetRevenue": 212435,
+        "onlineShare": 0.8756,
+        "unattributedOrders": 21.6644,
+        "unattributedNetRevenue": 45553,
+        "unattributedShare": 0.1102
+      },
+      "all": {
+        "clicks": 3340,
+        "spend": 60626,
+        "cpc": 18,
+        "orders": 174.9202,
+        "netOrders": 165.0361,
+        "revenue": 370252,
+        "netRevenue": 349210,
+        "margin": 132700,
+        "profit": 72074,
+        "cpo": 347,
+        "cpoNet": 367,
+        "aov": 2117,
+        "roi": 1.1888,
+        "buyoutRate": 0.9432,
+        "repeatRate": 0.3212,
+        "repeatOrdersShare": 0.288,
+        "breakEvenCpc": 40,
+        "ordersByChannel": {
+          "web": 39.4758,
+          "app": 111.4439,
+          "offline": 24.0005
+        },
+        "netRevenueByChannel": {
+          "web": 77803,
+          "app": 223345,
+          "offline": 48062
+        },
+        "channelShare": {
+          "web": 0.2257,
+          "app": 0.6371,
+          "offline": 0.1372
+        },
+        "onlineOrders": 150.9197,
+        "onlineNetRevenue": 301148,
+        "onlineShare": 0.8628,
+        "unattributedOrders": 21.6644,
+        "unattributedNetRevenue": 45553,
+        "unattributedShare": 0.1102
+      },
+      "webOnlyRoi": -0.6026,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 92152,
+          "roi": 0.52
+        },
+        {
+          "orderIndex": 2,
+          "margin": 123995,
+          "roi": 1.0452
+        },
+        {
+          "orderIndex": 3,
+          "margin": 132700,
+          "roi": 1.1888
+        }
+      ],
+      "repeatRateGapToBreakEven": 0
+    },
+    {
+      "id": "src:tg",
+      "parentId": null,
+      "level": "source",
+      "name": "Telegram Ads",
+      "first": {
+        "clicks": 7740,
+        "spend": 288350,
+        "cpc": 37,
+        "orders": 181.984,
+        "netOrders": 129.4692,
+        "revenue": 1041176,
+        "netRevenue": 752740,
+        "margin": 211600,
+        "profit": -76750,
+        "cpo": 1584,
+        "cpoNet": 2227,
+        "aov": 5721,
+        "roi": -0.2662,
+        "buyoutRate": 0.723,
+        "repeatRate": 0.1372,
+        "repeatOrdersShare": 0.1357,
+        "breakEvenCpc": 27,
+        "ordersByChannel": {
+          "web": 110.9893,
+          "app": 46.9082,
+          "offline": 24.0865
+        },
+        "netRevenueByChannel": {
+          "web": 449922,
+          "app": 200872,
+          "offline": 101947
+        },
+        "channelShare": {
+          "web": 0.6099,
+          "app": 0.2578,
+          "offline": 0.1324
+        },
+        "onlineOrders": 157.8975,
+        "onlineNetRevenue": 650793,
+        "onlineShare": 0.8676,
+        "unattributedOrders": 69.7763,
+        "unattributedNetRevenue": 294830,
+        "unattributedShare": 0.2489
+      },
+      "all": {
+        "clicks": 7740,
+        "spend": 288350,
+        "cpc": 37,
+        "orders": 210.5685,
+        "netOrders": 151.8699,
+        "revenue": 1232440,
+        "netRevenue": 905244,
+        "margin": 255157,
+        "profit": -33193,
+        "cpo": 1369,
+        "cpoNet": 1899,
+        "aov": 5853,
+        "roi": -0.1151,
+        "buyoutRate": 0.7345,
+        "repeatRate": 0.1372,
+        "repeatOrdersShare": 0.1357,
+        "breakEvenCpc": 33,
+        "ordersByChannel": {
+          "web": 123.971,
+          "app": 57.2105,
+          "offline": 29.387
+        },
+        "netRevenueByChannel": {
+          "web": 516947,
+          "app": 257458,
+          "offline": 130840
+        },
+        "channelShare": {
+          "web": 0.5887,
+          "app": 0.2717,
+          "offline": 0.1396
+        },
+        "onlineOrders": 181.1815,
+        "onlineNetRevenue": 774405,
+        "onlineShare": 0.8604,
+        "unattributedOrders": 69.7763,
+        "unattributedNetRevenue": 294830,
+        "unattributedShare": 0.2489
+      },
+      "webOnlyRoi": -0.5614
+    },
+    {
+      "id": "cmp:tg-discounts",
+      "parentId": "src:tg",
+      "level": "campaign",
+      "name": "Каналы про скидки",
+      "fullName": "Каналы про скидки",
+      "sourceName": "Telegram Ads",
+      "placementName": null,
+      "category": "Штаны и брюки",
+      "categoryId": "pants",
+      "marginRate": 0.275,
+      "roiBeforeReturns": -0.0373,
+      "trafficKind": "cold",
+      "first": {
+        "clicks": 5679,
+        "spend": 191722,
+        "cpc": 34,
+        "orders": 131.9936,
+        "netOrders": 88.0333,
+        "revenue": 671141,
+        "netRevenue": 446195,
+        "margin": 122702,
+        "profit": -69020,
+        "cpo": 1453,
+        "cpoNet": 2178,
+        "aov": 5085,
+        "roi": -0.36,
+        "buyoutRate": 0.6648,
+        "repeatRate": 0.0899,
+        "repeatOrdersShare": 0.088,
+        "breakEvenCpc": 22,
+        "ordersByChannel": {
+          "web": 84.3314,
+          "app": 31.1424,
+          "offline": 16.5198
+        },
+        "netRevenueByChannel": {
+          "web": 285619,
+          "app": 104812,
+          "offline": 55763
+        },
+        "channelShare": {
+          "web": 0.6389,
+          "app": 0.2359,
+          "offline": 0.1252
+        },
+        "onlineOrders": 115.4738,
+        "onlineNetRevenue": 390432,
+        "onlineShare": 0.8748,
+        "unattributedOrders": 52.7216,
+        "unattributedNetRevenue": 190339,
+        "unattributedShare": 0.267
+      },
+      "all": {
+        "clicks": 5679,
+        "spend": 191722,
+        "cpc": 34,
+        "orders": 144.7232,
+        "netOrders": 96.8402,
+        "revenue": 739273,
+        "netRevenue": 493181,
+        "margin": 135659,
+        "profit": -56063,
+        "cpo": 1325,
+        "cpoNet": 1980,
+        "aov": 5108,
+        "roi": -0.2924,
+        "buyoutRate": 0.6671,
+        "repeatRate": 0.0899,
+        "repeatOrdersShare": 0.088,
+        "breakEvenCpc": 24,
+        "ordersByChannel": {
+          "web": 90.9459,
+          "app": 35.1244,
+          "offline": 18.6529
+        },
+        "netRevenueByChannel": {
+          "web": 310067,
+          "app": 119480,
+          "offline": 63635
+        },
+        "channelShare": {
+          "web": 0.6284,
+          "app": 0.2427,
+          "offline": 0.1289
+        },
+        "onlineOrders": 126.0703,
+        "onlineNetRevenue": 429546,
+        "onlineShare": 0.8711,
+        "unattributedOrders": 52.7216,
+        "unattributedNetRevenue": 190339,
+        "unattributedShare": 0.267
+      },
+      "webOnlyRoi": -0.5903,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 122702,
+          "roi": -0.36
+        },
+        {
+          "orderIndex": 2,
+          "margin": 134729,
+          "roi": -0.2973
+        },
+        {
+          "orderIndex": 3,
+          "margin": 135659,
+          "roi": -0.2924
+        }
+      ],
+      "repeatRateGapToBreakEven": 0.3147
+    },
+    {
+      "id": "cmp:tg-thematic",
+      "parentId": "src:tg",
+      "level": "campaign",
+      "name": "Тематические каналы",
+      "fullName": "Тематические каналы",
+      "sourceName": "Telegram Ads",
+      "placementName": null,
+      "category": "Микс — весь ассортимент",
+      "categoryId": "mix",
+      "marginRate": 0.29,
+      "roiBeforeReturns": 0.1105,
+      "trafficKind": "warm",
+      "first": {
+        "clicks": 2061,
+        "spend": 96628,
+        "cpc": 47,
+        "orders": 49.9904,
+        "netOrders": 41.4359,
+        "revenue": 370035,
+        "netRevenue": 306545,
+        "margin": 88898,
+        "profit": -7730,
+        "cpo": 1933,
+        "cpoNet": 2332,
+        "aov": 7402,
+        "roi": -0.08,
+        "buyoutRate": 0.8284,
+        "repeatRate": 0.2618,
+        "repeatOrdersShare": 0.2408,
+        "breakEvenCpc": 43,
+        "ordersByChannel": {
+          "web": 26.6579,
+          "app": 15.7658,
+          "offline": 7.5667
+        },
+        "netRevenueByChannel": {
+          "web": 164302,
+          "app": 96059,
+          "offline": 46184
+        },
+        "channelShare": {
+          "web": 0.5333,
+          "app": 0.3154,
+          "offline": 0.1514
+        },
+        "onlineOrders": 42.4237,
+        "onlineNetRevenue": 260361,
+        "onlineShare": 0.8486,
+        "unattributedOrders": 17.0547,
+        "unattributedNetRevenue": 104491,
+        "unattributedShare": 0.2057
+      },
+      "all": {
+        "clicks": 2061,
+        "spend": 96628,
+        "cpc": 47,
+        "orders": 65.8453,
+        "netOrders": 55.0297,
+        "revenue": 493167,
+        "netRevenue": 412063,
+        "margin": 119498,
+        "profit": 22870,
+        "cpo": 1468,
+        "cpoNet": 1756,
+        "aov": 7490,
+        "roi": 0.2367,
+        "buyoutRate": 0.8355,
+        "repeatRate": 0.2618,
+        "repeatOrdersShare": 0.2408,
+        "breakEvenCpc": 58,
+        "ordersByChannel": {
+          "web": 33.0251,
+          "app": 22.0861,
+          "offline": 10.7341
+        },
+        "netRevenueByChannel": {
+          "web": 206880,
+          "app": 137978,
+          "offline": 67205
+        },
+        "channelShare": {
+          "web": 0.5016,
+          "app": 0.3354,
+          "offline": 0.163
+        },
+        "onlineOrders": 55.1112,
+        "onlineNetRevenue": 344858,
+        "onlineShare": 0.837,
+        "unattributedOrders": 17.0547,
+        "unattributedNetRevenue": 104491,
+        "unattributedShare": 0.2057
+      },
+      "webOnlyRoi": -0.5069,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 88898,
+          "roi": -0.08
+        },
+        {
+          "orderIndex": 2,
+          "margin": 113906,
+          "roi": 0.1788
+        },
+        {
+          "orderIndex": 3,
+          "margin": 119498,
+          "roi": 0.2367
+        }
+      ],
+      "repeatRateGapToBreakEven": -0.1839
+    },
+    {
+      "id": "src:infl",
+      "parentId": null,
+      "level": "source",
+      "name": "Реклама у блогеров",
+      "first": {
+        "clicks": 5110,
+        "spend": 523406,
+        "cpc": 102,
+        "orders": 257.0124,
+        "netOrders": 230.2256,
+        "revenue": 1868361,
+        "netRevenue": 1640416,
+        "margin": 423323,
+        "profit": -100083,
+        "cpo": 2037,
+        "cpoNet": 2273,
+        "aov": 7270,
+        "roi": -0.1912,
+        "buyoutRate": 0.878,
+        "repeatRate": 0.3172,
+        "repeatOrdersShare": 0.2878,
+        "breakEvenCpc": 83,
+        "ordersByChannel": {
+          "web": 76.9197,
+          "app": 121.363,
+          "offline": 58.7297
+        },
+        "netRevenueByChannel": {
+          "web": 424052,
+          "app": 924037,
+          "offline": 292327
+        },
+        "channelShare": {
+          "web": 0.2993,
+          "app": 0.4722,
+          "offline": 0.2285
+        },
+        "onlineOrders": 198.2827,
+        "onlineNetRevenue": 1348090,
+        "onlineShare": 0.7715,
+        "unattributedOrders": 115.863,
+        "unattributedNetRevenue": 954705,
+        "unattributedShare": 0.243
+      },
+      "all": {
+        "clicks": 5110,
+        "spend": 523406,
+        "cpc": 102,
+        "orders": 360.8514,
+        "netOrders": 325.1243,
+        "revenue": 2807524,
+        "netRevenue": 2488380,
+        "margin": 635461,
+        "profit": 112055,
+        "cpo": 1450,
+        "cpoNet": 1610,
+        "aov": 7780,
+        "roi": 0.2141,
+        "buyoutRate": 0.8863,
+        "repeatRate": 0.3172,
+        "repeatOrdersShare": 0.2878,
+        "breakEvenCpc": 124,
+        "ordersByChannel": {
+          "web": 92.7563,
+          "app": 183.6316,
+          "offline": 84.4634
+        },
+        "netRevenueByChannel": {
+          "web": 528617,
+          "app": 1488298,
+          "offline": 471465
+        },
+        "channelShare": {
+          "web": 0.257,
+          "app": 0.5089,
+          "offline": 0.2341
+        },
+        "onlineOrders": 276.388,
+        "onlineNetRevenue": 2016915,
+        "onlineShare": 0.7659,
+        "unattributedOrders": 115.863,
+        "unattributedNetRevenue": 954705,
+        "unattributedShare": 0.243
+      },
+      "webOnlyRoi": -0.7909
+    },
+    {
+      "id": "cmp:infl-macro",
+      "parentId": "src:infl",
+      "level": "campaign",
+      "name": "Макро-инфлюенсеры",
+      "fullName": "Макро-инфлюенсеры",
+      "sourceName": "Реклама у блогеров",
+      "placementName": null,
+      "category": "Куртки и верхняя одежда",
+      "categoryId": "jackets",
+      "marginRate": 0.24,
+      "roiBeforeReturns": -0.1505,
+      "trafficKind": "influencer",
+      "first": {
+        "clicks": 2640,
+        "spend": 463401,
+        "cpc": 176,
+        "orders": 148.7969,
+        "netOrders": 129.603,
+        "revenue": 1640308,
+        "netRevenue": 1428821,
+        "margin": 342917,
+        "profit": -120484,
+        "cpo": 3114,
+        "cpoNet": 3576,
+        "aov": 11024,
+        "roi": -0.26,
+        "buyoutRate": 0.8711,
+        "repeatRate": 0.3822,
+        "repeatOrdersShare": 0.3341,
+        "breakEvenCpc": 130,
+        "ordersByChannel": {
+          "web": 35.4849,
+          "app": 90.1683,
+          "offline": 23.1437
+        },
+        "netRevenueByChannel": {
+          "web": 342973,
+          "app": 862892,
+          "offline": 222956
+        },
+        "channelShare": {
+          "web": 0.2385,
+          "app": 0.606,
+          "offline": 0.1555
+        },
+        "onlineOrders": 125.6532,
+        "onlineNetRevenue": 1205865,
+        "onlineShare": 0.8445,
+        "unattributedOrders": 91.7176,
+        "unattributedNetRevenue": 905111,
+        "unattributedShare": 0.291
+      },
+      "all": {
+        "clicks": 2640,
+        "spend": 463401,
+        "cpc": 176,
+        "orders": 223.4476,
+        "netOrders": 196.7175,
+        "revenue": 2514633,
+        "netRevenue": 2215166,
+        "margin": 531640,
+        "profit": 68239,
+        "cpo": 2074,
+        "cpoNet": 2356,
+        "aov": 11254,
+        "roi": 0.1473,
+        "buyoutRate": 0.8809,
+        "repeatRate": 0.3822,
+        "repeatOrdersShare": 0.3341,
+        "breakEvenCpc": 201,
+        "ordersByChannel": {
+          "web": 43.8541,
+          "app": 141.7103,
+          "offline": 37.8832
+        },
+        "netRevenueByChannel": {
+          "web": 431807,
+          "app": 1404443,
+          "offline": 378916
+        },
+        "channelShare": {
+          "web": 0.1963,
+          "app": 0.6342,
+          "offline": 0.1695
+        },
+        "onlineOrders": 185.5644,
+        "onlineNetRevenue": 1836250,
+        "onlineShare": 0.8305,
+        "unattributedOrders": 91.7176,
+        "unattributedNetRevenue": 905111,
+        "unattributedShare": 0.291
+      },
+      "webOnlyRoi": -0.8224,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 342917,
+          "roi": -0.26
+        },
+        {
+          "orderIndex": 2,
+          "margin": 484491,
+          "roi": 0.0455
+        },
+        {
+          "orderIndex": 3,
+          "margin": 531640,
+          "roi": 0.1473
+        }
+      ],
+      "repeatRateGapToBreakEven": -0.1078
+    },
+    {
+      "id": "cmp:infl-promo",
+      "parentId": "src:infl",
+      "level": "campaign",
+      "name": "Промокоды у блогеров",
+      "fullName": "Промокоды у блогеров",
+      "sourceName": "Реклама у блогеров",
+      "placementName": null,
+      "category": "Аксессуары: носки, ремни",
+      "categoryId": "accessories",
+      "marginRate": 0.38,
+      "roiBeforeReturns": 0.4442,
+      "trafficKind": "influencer",
+      "first": {
+        "clicks": 2470,
+        "spend": 60005,
+        "cpc": 24,
+        "orders": 108.2155,
+        "netOrders": 100.6226,
+        "revenue": 228053,
+        "netRevenue": 211596,
+        "margin": 80406,
+        "profit": 20402,
+        "cpo": 554,
+        "cpoNet": 596,
+        "aov": 2107,
+        "roi": 0.34,
+        "buyoutRate": 0.9278,
+        "repeatRate": 0.2278,
+        "repeatOrdersShare": 0.2124,
+        "breakEvenCpc": 33,
+        "ordersByChannel": {
+          "web": 41.4348,
+          "app": 31.1947,
+          "offline": 35.586
+        },
+        "netRevenueByChannel": {
+          "web": 81079,
+          "app": 61146,
+          "offline": 69371
+        },
+        "channelShare": {
+          "web": 0.3829,
+          "app": 0.2883,
+          "offline": 0.3288
+        },
+        "onlineOrders": 72.6295,
+        "onlineNetRevenue": 142225,
+        "onlineShare": 0.6712,
+        "unattributedOrders": 24.1454,
+        "unattributedNetRevenue": 49593,
+        "unattributedShare": 0.1495
+      },
+      "all": {
+        "clicks": 2470,
+        "spend": 60005,
+        "cpc": 24,
+        "orders": 137.4038,
+        "netOrders": 128.4067,
+        "revenue": 292891,
+        "netRevenue": 273214,
+        "margin": 103821,
+        "profit": 43817,
+        "cpo": 437,
+        "cpoNet": 467,
+        "aov": 2132,
+        "roi": 0.7302,
+        "buyoutRate": 0.9328,
+        "repeatRate": 0.2278,
+        "repeatOrdersShare": 0.2124,
+        "breakEvenCpc": 42,
+        "ordersByChannel": {
+          "web": 48.9022,
+          "app": 41.9213,
+          "offline": 46.5803
+        },
+        "netRevenueByChannel": {
+          "web": 96810,
+          "app": 83855,
+          "offline": 92549
+        },
+        "channelShare": {
+          "web": 0.3559,
+          "app": 0.3051,
+          "offline": 0.339
+        },
+        "onlineOrders": 90.8235,
+        "onlineNetRevenue": 180665,
+        "onlineShare": 0.661,
+        "unattributedOrders": 24.1454,
+        "unattributedNetRevenue": 49593,
+        "unattributedShare": 0.1495
+      },
+      "webOnlyRoi": -0.4865,
+      "paybackCurve": [
+        {
+          "orderIndex": 1,
+          "margin": 80406,
+          "roi": 0.34
+        },
+        {
+          "orderIndex": 2,
+          "margin": 100012,
+          "roi": 0.6667
+        },
+        {
+          "orderIndex": 3,
+          "margin": 103821,
+          "roi": 0.7302
+        }
+      ],
+      "repeatRateGapToBreakEven": 0
+    }
+  ]
+}
