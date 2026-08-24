@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:page": "vite build && node scripts/build-page.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "data:sample": "tsx scripts/sample.ts"
