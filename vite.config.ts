@@ -9,11 +9,11 @@ import react from '@vitejs/plugin-react'
  */
 const buildInfo = () => {
   try {
-    const sha = execSync('git rev-parse --short HEAD').toString().trim()
-    const date = execSync('git log -1 --format=%cd --date=format:%d.%m.%Y %H:%M')
-      .toString()
-      .trim()
-    return `${sha} · ${date}`
+    // Формат даты обязан быть в кавычках: без них шелл разрезает строку
+    // по пробелу, git принимает «%H:%M» за имя объекта и падает,
+    // а метка молча превращается в «без git».
+    const out = execSync('git log -1 --format="%h · %cd" --date=format:"%d.%m.%Y %H:%M"')
+    return out.toString().trim()
   } catch {
     return 'без git'
   }
